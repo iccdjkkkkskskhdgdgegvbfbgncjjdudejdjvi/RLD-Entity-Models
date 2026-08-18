@@ -1,0 +1,122 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local Shake = Instance.new("ModuleScript")
+Shake.Name = "A150Shake"
+
+Shake.Source = [[
+local RunService = game:GetService("RunService")
+
+local Shake = {}
+
+function Shake.Start(root, strength, rotationStrength, speed)
+	strength = strength or 0.025
+	rotationStrength = rotationStrength or 5
+	speed = speed or 35
+
+	local images = {}
+
+	for _, obj in ipairs(root:GetDescendants()) do
+		if obj:IsA("ImageLabel") then
+			images[#images + 1] = {
+				object = obj,
+				position = obj.Position,
+				rotation = obj.Rotation
+			}
+		end
+	end
+
+	local time = 0
+	local connection
+
+	connection = RunService.RenderStepped:Connect(function(dt)
+		if not root.Parent then
+			connection:Disconnect()
+			return
+		end
+
+		time += dt
+
+		local x = math.noise(time * speed, 0, 0) * strength
+		local y = math.noise(0, time * speed, 0) * strength
+		local r = math.noise(time * speed * 1.15, 100, 0) * rotationStrength
+
+		for _, info in ipairs(images) do
+			local image = info.object
+
+			if image and image.Parent then
+				local pos = info.position
+
+				image.Position = UDim2.new(
+					pos.X.Scale + x,
+					pos.X.Offset,
+					pos.Y.Scale + y,
+					pos.Y.Offset
+				)
+
+				image.Rotation = info.rotation + r
+			end
+		end
+	end)
+
+	return function()
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
+
+		for _, info in ipairs(images) do
+			local image = info.object
+
+			if image and image.Parent then
+				image.Position = info.position
+				image.Rotation = info.rotation
+			end
+		end
+	end
+end
+
+return Shake
+]]
+
+Shake.Parent = ReplicatedStorage
+
+local shake = require(Shake)
+
+local url = "https://raw.githubusercontent.com/iccdjkkkkskskhdgdgegvbfbgncjjdudejdjvi/REBLAHARDCOREDI/refs/heads/main/Place_17302962269_Model_A-150_1787053461.txt"
+
+local path = "A150Model.rbxm"
+
+if not isfile(path) then
+	local data = game:HttpGet(url)
+	writefile(path, data)
+end
+
+local objects = game:GetObjects(getcustomasset(path))
+local model = objects[1]
+
+if model then
+	model.Name = "A150Model"
+	model.Parent = workspace
+
+	if model:IsA("Model") then
+		local cf = hrp.CFrame * CFrame.new(0, 0, -8)
+
+		if model.PrimaryPart then
+			model:PivotTo(cf)
+		else
+			local part = model:FindFirstChildWhichIsA("BasePart", true)
+
+			if part then
+				model.PrimaryPart = part
+				model:PivotTo(cf)
+			end
+		end
+	end
+
+	shake.Start(model, 0.025, 5, 35)
+end
