@@ -9,6 +9,8 @@
             |___/                                                   |___/         |_|
 ]]--
 
+-- BA
+
 if getgenv().VynixuEntitySpawnerV2 then return getgenv().VynixuEntitySpawnerV2 end
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Functions.lua"))()
@@ -775,23 +777,45 @@ Module.Create = function(self, config: any): any?
         success, entityModel = true, asset
     elseif typeof(asset) == "string" then
         success, entityModel = pcall(function()
-			local instance: Instance? = LoadCustomInstance(asset)
-			if typeof(instance) == "Instance" then
-                if instance.ClassName ~= "Model" then
-                    error(string.format(
-                        debug.traceback("Entity model Instance invalid, expected Model but got '%s'"),
-                        instance.ClassName
-                    ))
-                    return
+            local path = asset
+
+            if asset:match("^https?://") then
+                local fileName = asset:match("[^/]+$"):gsub("[?#].*$", "")
+                local ext = fileName:match("%.[^%.]+$")
+
+                if not isfile(fileName) then
+                    writefile(fileName, game:HttpGet(asset))
                 end
-			else
-				error(debug.traceback("Failed to fetch entity model."))
-				return
-			end
-			return instance
-		end)
+
+                path = fileName
+            end
+
+            local objects = game:GetObjects(getcustomasset(path))
+
+            if #objects == 0 then
+                error(debug.traceback("Failed to load entity asset."))
+            end
+
+            local model
+
+            for _, instance in ipairs(objects) do
+                if instance:IsA("Model") then
+                    model = instance
+                    break
+                end
+            end
+
+            if not model then
+                error(debug.traceback("Entity asset does not contain a Model."))
+            end
+
+            return model
+        end)
     end
-    if not (success and entityModel) then return end
+
+    if not (success and entityModel) then
+        return
+    end
 
     -- Entity model preparations
     local rootPart = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart", true)
@@ -867,9 +891,7 @@ Module.Create = function(self, config: any): any?
             end
         end
     }
-end
-
-Module.Run = function(self, entity: any, copyEntity: boolean)
+eModule.Run = function(self, entity: any, copyEntity: boolean)
     if copyEntity == true then
         self:Run(CloneTable(entity), false)
         return
@@ -1208,6 +1230,7 @@ Module.Run = function(self, entity: any, copyEntity: boolean)
             entity:Despawn()
         end
     end)
+end
 end
 
 
