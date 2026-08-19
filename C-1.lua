@@ -293,7 +293,7 @@ if model then
 			end
 
 			if damageCooldown <= 0 then
-				damageCooldown = 1
+				damageCooldown = 1.3
 
 				if not hiding then
 					humanoid:TakeDamage(20)
