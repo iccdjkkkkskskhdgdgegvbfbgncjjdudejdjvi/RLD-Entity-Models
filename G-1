@@ -1,0 +1,74 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local url = "https://raw.githubusercontent.com/lynguyen26031993-design/-u/refs/heads/main/Place_17302962269_Model_G-1_1787124665.txt"
+
+local data = game:HttpGet(url)
+
+local path = "G1Model.rbxm"
+writefile(path, data)
+
+local model = game:GetObjects(getcustomasset(path))[1]
+
+if model then
+	model.Parent = workspace
+
+	if model:IsA("Model") then
+		local cf = hrp.CFrame * CFrame.new(0, 0, -8)
+
+		if model.PrimaryPart then
+			model:PivotTo(cf)
+		else
+			local part = model:FindFirstChildWhichIsA("BasePart", true)
+
+			if part then
+				model.PrimaryPart = part
+				model:PivotTo(cf)
+			end
+		end
+	end
+
+	local images = {}
+
+	for _, obj in ipairs(model:GetDescendants()) do
+		if obj:IsA("ImageLabel") then
+			images[#images + 1] = {
+				object = obj,
+				position = obj.Position
+			}
+		end
+	end
+
+	local t = 0
+	local connection
+
+	connection = RunService.RenderStepped:Connect(function(dt)
+		if not model.Parent then
+			connection:Disconnect()
+			return
+		end
+
+		t += dt
+
+		local shakeX = math.noise(t * 35, 0, 0) * 0.025
+		local shakeY = math.noise(0, t * 35, 0) * 0.025
+
+		for _, info in ipairs(images) do
+			local image = info.object
+			local pos = info.position
+
+			if image and image.Parent then
+				image.Position = UDim2.new(
+					pos.X.Scale + shakeX,
+					pos.X.Offset,
+					pos.Y.Scale + shakeY,
+					pos.Y.Offset
+				)
+			end
+		end
+	end)
+end
