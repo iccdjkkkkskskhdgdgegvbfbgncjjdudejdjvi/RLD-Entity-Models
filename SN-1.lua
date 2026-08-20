@@ -39,6 +39,11 @@ end
 
 local room = CurrentRooms:WaitForChild(tostring(LatestRoom.Value))
 local parts = room:WaitForChild("Parts")
+local roomEntrance = room:FindFirstChild("RoomEntrance", true)
+
+if not roomEntrance or not roomEntrance:IsA("BasePart") then
+	return
+end
 
 local floor
 local biggest = -math.huge
@@ -85,6 +90,9 @@ local DESPAWN_TIME = 8 * 60
 local DAMAGE = 40
 local DAMAGE_COOLDOWN = 3
 local HITBOX_SIZE = Vector3.new(10, 10, 10)
+
+local ENTITY_SPEED = 10
+local SPAWN_DISTANCE = -25
 
 local nextDamageTime = 0
 
@@ -176,19 +184,6 @@ if not model then
 end
 
 model.Parent = workspace
-hit.Parent = model:FindFirstChildWhichIsA("BasePart") 
-
-local images = {}
-
-for _, obj in ipairs(model:GetDescendants()) do
-	if obj:IsA("ImageLabel") then
-		images[#images + 1] = {
-			obj,
-			obj.Position,
-			obj.Rotation
-		}
-	end
-end
 
 local entityPart
 
@@ -202,6 +197,20 @@ end
 if not entityPart then
 	cleanup()
 	return
+end
+
+hit.Parent = entityPart
+
+local images = {}
+
+for _, obj in ipairs(model:GetDescendants()) do
+	if obj:IsA("ImageLabel") then
+		images[#images + 1] = {
+			obj,
+			obj.Position,
+			obj.Rotation
+		}
+	end
 end
 
 hitbox = Instance.new("Part")
@@ -225,6 +234,7 @@ local overlapParams = OverlapParams.new()
 overlapParams.FilterType = Enum.RaycastFilterType.Include
 
 local character = LocalPlayer.Character
+
 if character then
 	overlapParams.FilterDescendantsInstances = {character}
 end
@@ -276,10 +286,17 @@ table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 end))
 
 local startIndex = math.random(1, #cornerParts)
-
 currentIndex = startIndex
 
-model:PivotTo(cornerParts[startIndex].CFrame)
+local entranceCF = roomEntrance.CFrame
+local spawnPosition = entranceCF.Position - entranceCF.LookVector * SPAWN_DISTANCE
+
+local spawnCF = CFrame.lookAt(
+	spawnPosition,
+	spawnPosition + entranceCF.LookVector
+)
+
+model:PivotTo(spawnCF)
 
 hitbox.CFrame = model:GetPivot()
 
@@ -378,8 +395,8 @@ task.spawn(function()
 
 				if humanoid and humanoid.Health > 0 then
 					humanoid:TakeDamage(DAMAGE)
-					hit:Play() 
-					
+					hit:Play()
+
 					local stats = game.ReplicatedStorage.GameStats:FindFirstChild(
 						"Player_" .. game.Players.LocalPlayer.Name
 					)
@@ -391,7 +408,7 @@ task.spawn(function()
 							deathCause.Value = "SN-1"
 						end
 					end
-					
+
 					nextDamageTime = now + DAMAGE_COOLDOWN
 				end
 			end
@@ -418,11 +435,15 @@ task.spawn(function()
 		local current = model:GetPivot()
 
 		local distance = (current.Position - target.Position).Magnitude
-		local duration = distance / 10
+		local duration = distance / ENTITY_SPEED
 
 		currentTween = TweenService:Create(
 			pivotValue,
-			TweenInfo.new(duration, Enum.EasingStyle.Linear),
+			TweenInfo.new(
+				duration,
+				Enum.EasingStyle.Linear,
+				Enum.EasingDirection.InOut
+			),
 			{
 				Value = target
 			}
