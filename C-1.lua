@@ -144,6 +144,108 @@ if model then
 			end
 		end
 
+		local pointLights = {}
+
+		for _, obj in ipairs(model:GetDescendants()) do
+			if obj:IsA("PointLight") then
+				local hue, saturation, value = obj.Color:ToHSV()
+
+				pointLights[#pointLights + 1] = {
+					object = obj,
+					hue = hue,
+					saturation = saturation,
+					value = value
+				}
+			end
+		end
+
+		local rainbowTweens = {}
+		local rainbowStopped = false
+
+		local function stopRainbow()
+			if rainbowStopped then
+				return
+			end
+
+			rainbowStopped = true
+
+			for _, lightTween in ipairs(rainbowTweens) do
+				if lightTween then
+					lightTween:Cancel()
+				end
+			end
+
+			table.clear(rainbowTweens)
+			table.clear(pointLights)
+		end
+
+		task.spawn(function()
+			local hue = 0
+
+			while not rainbowStopped and model and model.Parent do
+				local nextHue = (hue + 1 / 6) % 1
+				local activeTweens = {}
+
+				table.clear(rainbowTweens)
+
+				for _, info in ipairs(pointLights) do
+					local light = info.object
+
+					if light and light.Parent then
+						local targetColor = Color3.fromHSV(
+							nextHue,
+							info.saturation,
+							info.value
+						)
+
+						local lightTween = TweenService:Create(
+							light,
+							TweenInfo.new(
+								0.5,
+								Enum.EasingStyle.Linear,
+								Enum.EasingDirection.InOut
+							),
+							{
+								Color = targetColor
+							}
+						)
+
+						rainbowTweens[#rainbowTweens + 1] = lightTween
+						activeTweens[#activeTweens + 1] = lightTween
+
+						lightTween:Play()
+					end
+				end
+
+				local elapsed = 0
+
+				while elapsed < 0.5 and not rainbowStopped do
+					local dt = RunService.Heartbeat:Wait()
+					elapsed += dt
+				end
+
+				if rainbowStopped then
+					break
+				end
+
+				for _, lightTween in ipairs(activeTweens) do
+					if lightTween then
+						lightTween:Cancel()
+					end
+				end
+
+				hue = nextHue
+			end
+
+			for _, lightTween in ipairs(rainbowTweens) do
+				if lightTween then
+					lightTween:Cancel()
+				end
+			end
+
+			table.clear(rainbowTweens)
+		end)
+
 		local t = 0
 		local connection
 		local tween
@@ -161,6 +263,8 @@ if model then
 			destroyed = true
 			entityMoving = false
 
+			stopRainbow()
+
 			if connection then
 				connection:Disconnect()
 				connection = nil
@@ -173,6 +277,11 @@ if model then
 
 			table.clear(images)
 			table.clear(gradients)
+
+			if hit and hit.Parent then
+				hit:Stop()
+				hit.Parent = nil
+			end
 
 			if model and model.Parent then
 				model:Destroy()
@@ -194,7 +303,8 @@ if model then
 
 			for _, info in ipairs(gradients) do
 				if info.object and info.object.Parent then
-					info.object.Rotation = (info.object.Rotation + dt * 280) % 360
+					info.object.Rotation =
+						(info.object.Rotation + dt * 280) % 360
 				end
 			end
 
@@ -334,11 +444,11 @@ if model then
 			local speed = 30
 			local duration = distance / speed
 
-			local targetPosition = startCFrame.Position + backward * distance
+			local targetPosition =
+				startCFrame.Position + backward * distance
 
-			local targetCFrame = CFrame.new(
-				targetPosition
-			) * startCFrame.Rotation
+			local targetCFrame =
+				CFrame.new(targetPosition) * startCFrame.Rotation
 
 			tween = TweenService:Create(
 				part,
