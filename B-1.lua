@@ -8,105 +8,17 @@ local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
 local humanoid = char:WaitForChild("Humanoid")
 
-local url = "https://raw.githubusercontent.com/lynguyen26031993-design/-u/refs/heads/main/Place_17302962269_Model_A-1_1787126723.txt"
+local url = "https://raw.githubusercontent.com/iccdjkkkkskskhdgdgegvbfbgncjjdudejdjvi/RLD-Entity-Models/refs/heads/main/Place_17302962269_Model_B-1_1787464205.txt"
 
 local data = game:HttpGet(url)
 
-local path = "A1Model.rbxm"
+local path = "B1Model.rbxm"
 writefile(path, data)
 
 local model = game:GetObjects(getcustomasset(path))[1]
 
 if model then
 	model.Parent = workspace
-	model.Name = "B-1"
-
-	local highestLight
-	local highestBrightness = -math.huge
-	local ringEmitters = {}
-
-	for _, obj in ipairs(model:GetDescendants()) do
-		if obj:IsA("Light") then
-			obj.Color = Color3.fromRGB(140, 255, 69)
-			obj.Range = obj.Range / 2
-
-			if obj.Brightness > highestBrightness then
-				highestBrightness = obj.Brightness
-				highestLight = obj
-			end
-
-		elseif obj:IsA("ParticleEmitter") then
-			local parent = obj.Parent
-
-			if parent:IsA("Attachment") and parent.Name == "Rings" then
-				obj.Enabled = false
-
-				local emitter = Instance.new("ParticleEmitter")
-
-				emitter.Name = obj.Name
-				emitter.Texture = "rbxassetid://136256499840064"
-				emitter.Enabled = false
-				emitter.Rate = 0
-				emitter.Lifetime = NumberRange.new(0.65)
-
-				emitter.Speed = NumberRange.new(0)
-				emitter.Drag = 0
-				emitter.Acceleration = Vector3.zero
-				emitter.VelocityInheritance = 0
-
-				emitter.Size = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 5),
-					NumberSequenceKeypoint.new(1, 5)
-				})
-
-				emitter.ZOffset = -0.5
-
-				emitter.Squash = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0),
-					NumberSequenceKeypoint.new(0.05, 0),
-					NumberSequenceKeypoint.new(0.12, -0.1),
-					NumberSequenceKeypoint.new(0.20, -0.25),
-					NumberSequenceKeypoint.new(0.30, -0.45),
-					NumberSequenceKeypoint.new(0.40, -0.65),
-					NumberSequenceKeypoint.new(0.50, -0.85),
-					NumberSequenceKeypoint.new(0.60, -1),
-					NumberSequenceKeypoint.new(1, -1)
-				})
-
-				emitter.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0),
-					NumberSequenceKeypoint.new(0.65, 0),
-					NumberSequenceKeypoint.new(0.72, 0.15),
-					NumberSequenceKeypoint.new(0.78, 0.35),
-					NumberSequenceKeypoint.new(0.84, 0.55),
-					NumberSequenceKeypoint.new(0.92, 0.8),
-					NumberSequenceKeypoint.new(1, 1)
-				})
-
-				emitter.Parent = parent
-
-				obj:Destroy()
-
-				ringEmitters[#ringEmitters + 1] = emitter
-			else
-				obj.Enabled = false
-			end
-
-		elseif obj:IsA("ImageLabel") then
-			obj.Image = "rbxassetid://136256499840064"
-
-		elseif obj:IsA("Sound") then
-			if obj.Name == "PlaySound" then
-				obj.PlaybackSpeed = 0.08
-			elseif obj.Name == "PlaySound1" then
-				obj.PlaybackSpeed = 2.5
-			end
-		end
-	end
-
-	if highestLight then
-		highestLight.Enabled = false
-	end
 	
 		local entityHitbox
 	local hitboxConnection
@@ -296,7 +208,7 @@ end)
 				Enum.EasingDirection.Out
 			),
 			{
-				Size = Vector3.new(0.15, 6, 6),
+				Size = Vector3.new(0.15, 8, 8),
 				Transparency = 0
 			}
 		)
@@ -421,16 +333,6 @@ end)
 				image.Rotation = info.rotation + rotate
 			end
 		end
-
-		while emitTimer >= 0.4 do
-			emitTimer -= 0.4
-
-			for _, emitter in ipairs(ringEmitters) do
-				if emitter and emitter.Parent then
-					emitter:Emit(1)
-				end
-			end
-		end
 	end)
 
 	local initialPivot = model:GetPivot()
@@ -455,9 +357,6 @@ end)
 			entityHitbox:Destroy()
 			entityHitbox = nil
 		end
-
-		table.clear(images)
-		table.clear(ringEmitters)
 
 		if model and model.Parent then
 			model:Destroy()
