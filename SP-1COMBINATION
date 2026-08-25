@@ -1,0 +1,3533 @@
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local GameData = ReplicatedStorage:WaitForChild("GameData")
+local LatestRoom = GameData:WaitForChild("LatestRoom")
+
+local player = Players.LocalPlayer
+
+local function LoadModel(file, url)
+	if not isfile(file) then
+		writefile(file, game:HttpGet(url))
+	end
+
+	return game:GetObjects(getcustomasset(file))[1]
+end
+
+local redTrailTemplate = LoadModel(
+	"SP1RedTrail.txt",
+	"https://raw.githubusercontent.com/iccdjkkkkskskhdgdgegvbfbgncjjdudejdjvi/RLD-Entity-Models/refs/heads/main/Place_17302962269_Trail_Trail_1787580960.txt"
+)
+
+local blueTrailTemplate = LoadModel(
+	"SP1BlueTrail.txt",
+	"https://raw.githubusercontent.com/iccdjkkkkskskhdgdgegvbfbgncjjdudejdjvi/RLD-Entity-Models/refs/heads/main/Place_17302962269_Trail_Trail2_1787580976.txt"
+)
+
+local beamTemplate = LoadModel(
+	"SP1SingularityBeam.txt",
+	"https://raw.githubusercontent.com/iccdjkkkkskskhdgdgegvbfbgncjjdudejdjvi/RLD-Entity-Models/refs/heads/main/Place_6839171747_Beam_SingularityChain_1787582861.txt"
+)
+
+local CameraShaker = require(game.ReplicatedStorage:WaitForChild("CameraShaker"))
+local camera = workspace.CurrentCamera
+
+local spawnShake = CameraShaker.new(
+	Enum.RenderPriority.Camera.Value,
+	function(shakeCf)
+		camera.CFrame = camera.CFrame * shakeCf
+	end
+)
+
+spawnShake:Start()
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local GameData = ReplicatedStorage:WaitForChild("GameData")
+local LatestRoom = GameData:WaitForChild("LatestRoom")
+local CurrentRooms = workspace:WaitForChild("CurrentRooms")
+
+local room = CurrentRooms:FindFirstChild(tostring(LatestRoom.Value))
+
+local removed = {}
+local light
+
+if room then
+	for _, obj in ipairs(room:GetDescendants()) do
+		if obj:IsA("MeshPart") and obj.Name == "Door" then
+			local doorModel = obj.Parent
+
+			if doorModel:IsA("Model") and doorModel.Name == "Door" then
+
+				light = Instance.new("PointLight")
+				light.Color = Color3.fromRGB(190, 105, 255)
+				light.Brightness = 2
+				light.Range = 10
+				light.Parent = obj
+
+				for _, v in ipairs(doorModel:GetDescendants()) do
+					if string.find(v.Name:lower(), "func", 1, true)
+						or v.Name == "Collision"
+						or v.Name == "ClientOpen"
+						or v.Name == "Hidden" then
+
+						table.insert(removed, {
+							instance = v,
+							parent = v.Parent
+						})
+
+						v.Parent = nil
+					end
+				end
+			end
+		end
+	end
+end
+
+local url = "https://raw.githubusercontent.com/iccdjkkkkskskhdgdgegvbfbgncjjdudejdjvi/RLD-Entity-Models/refs/heads/main/Place_17302962269_Model_SP-1_1787465482.txt"
+
+local success, data = pcall(function()
+	return game:HttpGet(url)
+end)
+
+if not success or not data then
+	warn("Không thể tải model!")
+	return
+end
+
+local function GetGitSound(GithubSnd, SoundName)
+	if not isfile(SoundName .. ".mp3") then
+		writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
+	end
+
+	local sound = Instance.new("Sound")
+	sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+	return sound
+end
+
+local hit = GetGitSound(
+	"https://github.com/lynguyen26031993-design/-u/raw/refs/heads/main/SP-1_Split.mp3.mpeg.mp3?raw=true",
+	"kcjhjkalolokx"
+)
+
+hit.Volume = 2
+hit.Name = "hit"
+hit.PlaybackSpeed = 1.3
+hit.RollOffMaxDistance = 120
+
+local split = GetGitSound(
+	"https://github.com/lynguyen26031993-design/-u/raw/refs/heads/main/SP-1_Split.mp3.mpeg.mp3?raw=true",
+	"kcjhjkalolokx"
+)
+
+split.Volume = 3
+split.Name = "split"
+split.PlaybackSpeed = 1
+split.RollOffMaxDistance = 120
+
+local rattle = GetGitSound(
+	"https://github.com/iccdjkkkkskskhdgdgegvbfbgncjjdudejdjvi/RLD-Entity-Models/raw/refs/heads/main/lv_0_20260824201427.mp3?raw=true",
+	"jjkcjhsjjjxjg"
+)
+
+rattle.Volume = 3
+rattle.Name = "rattle"
+rattle.PlaybackSpeed = 1
+rattle.RollOffMaxDistance = 120
+
+local theme = GetGitSound(
+	"https://github.com/iccdjkkkkskskhdgdgegvbfbgncjjdudejdjvi/RLD-Entity-Models/raw/refs/heads/main/YTDown.com_YouTube_Musicmanaz-Two-Step-Redliner-UST_Media_cGUHvlt2X8M_001_1080p.mp3?raw=true",
+	"jcjjkskkolajnxue"
+)
+
+theme.Volume = 0.6
+theme.Name = "theme"
+theme.Parent = workspace
+theme.PlaybackSpeed = 1
+theme.RollOffMaxDistance = 2000020000020200
+theme:Play() 
+
+local path = "SP1Model.rbxm"
+writefile(path, data)
+
+local orbitMonsterAttachment
+local orbitMonsterGui
+local orbitDropAttachment
+local orbitDropParticles = {}
+
+local model = game:GetObjects(getcustomasset(path))[1]
+
+for _, obj in ipairs(model:GetDescendants()) do
+		if obj:IsA("BillboardGui") and obj.Name == "MonsterGui" then
+			orbitMonsterGui = obj:Clone()
+			orbitMonsterGui.Name = "Bla" 
+			orbitMonsterGui:FindFirstChildWhichIsA("ImageLabel").Image = "rbxassetid://128224473539573" 
+			orbitMonsterGui.Parent = nil
+			break
+		end
+	end
+	
+	local dropParticleTemplates = {}
+local splitSoundTemplates = {}
+
+if model then
+	for _, obj in ipairs(model:GetDescendants()) do
+		if obj:IsA("ParticleEmitter")
+			and string.find(obj.Name:lower(), "drop", 1, true) then
+
+			local clone = obj:Clone()
+			clone.Parent = nil
+
+			dropParticleTemplates[#dropParticleTemplates + 1] = clone
+
+		elseif obj:IsA("Sound")
+			and string.find(obj.Name:lower(), "split", 1, true) then
+
+			local clone = obj:Clone()
+			clone.Parent = nil
+
+			splitSoundTemplates[#splitSoundTemplates + 1] = clone
+		end
+	end
+end
+
+if model then
+	model.Parent = workspace
+
+	local mainPart = model:FindFirstChildWhichIsA("BasePart", true)
+
+	if not mainPart then
+		model:Destroy()
+		return
+	end
+
+	hit.Parent = mainPart
+	split.Parent = mainPart
+	rattle.Parent = mainPart
+
+	local val = LatestRoom.Value
+	local currentRoom
+	local currentRoomsFolder = workspace:FindFirstChild("CurrentRooms")
+
+	if currentRoomsFolder then
+		currentRoom = currentRoomsFolder:FindFirstChild(tostring(val))
+
+		if not currentRoom then
+			for _, child in ipairs(currentRoomsFolder:GetChildren()) do
+				if child:FindFirstChild("RoomEntrance") then
+					currentRoom = child
+					break
+				end
+			end
+		end
+	end
+
+	local spawnCFrame
+
+	if currentRoom then
+		local entrance = currentRoom:FindFirstChild("RoomEntrance")
+
+		if entrance then
+			local pos =
+				entrance.Position +
+				entrance.CFrame.LookVector * 25
+
+			spawnCFrame = CFrame.lookAt(
+				pos,
+				pos + entrance.CFrame.LookVector
+			)
+		end
+	end
+
+	if spawnCFrame then
+		if not model.PrimaryPart then
+			model.PrimaryPart = mainPart
+		end
+
+		model:PivotTo(spawnCFrame)
+
+		local hitbox = Instance.new("Part")
+		hitbox.Name = "DamageHitbox"
+		hitbox.Size = Vector3.new(15, 15, 15)
+		hitbox.Transparency = 1
+		hitbox.CanCollide = false
+		hitbox.CanTouch = false
+		hitbox.CanQuery = true
+		hitbox.Anchored = false
+		hitbox.Massless = true
+		hitbox.CFrame = mainPart.CFrame
+		hitbox.Parent = model
+
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = hitbox
+		weld.Part1 = mainPart
+		weld.Parent = hitbox
+
+local redSplitHitbox
+local blueSplitHitbox
+
+local redTrail
+local blueTrail
+
+local redTrailAtt0
+local redTrailAtt1
+local blueTrailAtt0
+local blueTrailAtt1
+
+local splitBeam
+local splitBeamAtt0
+local splitBeamAtt1
+
+local orbitPart
+local orbitTrail
+local orbitAtt0
+local orbitAtt1
+local orbitAngle = 0
+local orbitRadius = 12
+local orbitSpeed = 60
+
+local orbitFinalFlightConnection
+local finalChaserEnding = false
+
+		local splitHitboxDamageCooldown = 0
+		local splitHitboxInside = false
+		local splitHitboxesActive = false
+		
+		local orbitFinalVelocity = Vector3.zero
+local orbitFinalFlying = false
+		
+		local orbitChaserPart
+local orbitChaserBeam
+local orbitChaserBeamAtt0
+local orbitChaserBeamAtt1
+
+local orbitFinalBeam
+local orbitFinalBeamAtt0
+local orbitFinalBeamAtt1
+
+local orbitChaserInside = false
+local orbitChaserDamageCooldown = 0
+
+local orbitChaserImages = {}
+local orbitChaserShakeTime = 0
+local orbitChaserRotation = 0
+local orbitChaserTargetRotation = 0
+local orbitChaserRotationTime = 0
+
+		local function destroySplitHitboxes()
+	splitHitboxesActive = false
+	splitHitboxInside = false
+	splitHitboxDamageCooldown = 0
+
+	if redSplitHitbox then
+		redSplitHitbox.CanQuery = false
+	end
+
+	if blueSplitHitbox then
+		blueSplitHitbox.CanQuery = false
+	end
+end
+
+local function setupTrail(template, hitbox, color)
+	if not template or not hitbox then
+		return
+	end
+
+	local trail = template:Clone()
+
+	if not trail:IsA("Trail") then
+		trail = trail:FindFirstChildWhichIsA("Trail", true)
+	end
+
+	if not trail then
+		return
+	end
+
+	local att0 = Instance.new("Attachment")
+	att0.Name = "TrailAttachment0"
+	att0.Position = Vector3.new(0, 3.5, 0)
+	att0.Parent = hitbox
+
+	local att1 = Instance.new("Attachment")
+	att1.Name = "TrailAttachment1"
+	att1.Position = Vector3.new(0, -3.5, 0)
+	att1.Parent = hitbox
+
+	trail.Attachment0 = att0
+	trail.Attachment1 = att1
+	trail.Color = ColorSequence.new(color)
+	trail.Enabled = true
+	trail.Parent = hitbox
+
+	return trail, att0, att1
+end
+
+local function setupSplitBeam()
+	if not beamTemplate
+		or not redSplitHitbox
+		or not blueSplitHitbox then
+		return
+	end
+
+	local beam = beamTemplate:Clone()
+
+	if not beam:IsA("Beam") then
+		beam = beam:FindFirstChildWhichIsA("Beam", true)
+	end
+
+	if not beam then
+		return
+	end
+
+	splitBeamAtt0 = Instance.new("Attachment")
+	splitBeamAtt0.Name = "SplitBeamAttachment0"
+	splitBeamAtt0.Position = Vector3.zero
+	splitBeamAtt0.Parent = redSplitHitbox
+
+	splitBeamAtt1 = Instance.new("Attachment")
+	splitBeamAtt1.Name = "SplitBeamAttachment1"
+	splitBeamAtt1.Position = Vector3.zero
+	splitBeamAtt1.Parent = blueSplitHitbox
+
+	beam.Attachment0 = splitBeamAtt0
+	beam.Attachment1 = splitBeamAtt1
+
+	beam.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(
+			0,
+			Color3.fromRGB(255, 66, 66)
+		),
+
+		ColorSequenceKeypoint.new(
+			0.5,
+			Color3.fromRGB(255, 66, 66)
+		),
+
+		ColorSequenceKeypoint.new(
+			0.5001,
+			Color3.fromRGB(66, 214, 255)
+		),
+
+		ColorSequenceKeypoint.new(
+			1,
+			Color3.fromRGB(66, 214, 255)
+		)
+	})
+
+	beam.Enabled = true
+	beam.Parent = model
+
+	splitBeam = beam
+end
+
+		local function createSplitHitboxes()
+	destroySplitHitboxes()
+
+	splitHitboxesActive = true
+
+	if hitbox and hitbox.Parent then
+		hitbox.CanQuery = false
+	end
+
+	redSplitHitbox = Instance.new("Part")
+	redSplitHitbox.Name = "RedSplitHitbox"
+	redSplitHitbox.Size = Vector3.new(7, 7, 7)
+	redSplitHitbox.Transparency = 1
+	redSplitHitbox.CanCollide = false
+	redSplitHitbox.CanTouch = false
+	redSplitHitbox.CanQuery = true
+	redSplitHitbox.Anchored = true
+	redSplitHitbox.Parent = model
+
+	blueSplitHitbox = Instance.new("Part")
+	blueSplitHitbox.Name = "BlueSplitHitbox"
+	blueSplitHitbox.Size = Vector3.new(7, 7, 7)
+	blueSplitHitbox.Transparency = 1
+	blueSplitHitbox.CanCollide = false
+	blueSplitHitbox.CanTouch = false
+	blueSplitHitbox.CanQuery = true
+	blueSplitHitbox.Anchored = true
+	blueSplitHitbox.Parent = model
+
+		redTrail, redTrailAtt0, redTrailAtt1 = setupTrail(
+		redTrailTemplate,
+		redSplitHitbox,
+		Color3.fromRGB(255, 82, 82)
+	)
+
+	blueTrail, blueTrailAtt0, blueTrailAtt1 = setupTrail(
+		blueTrailTemplate,
+		blueSplitHitbox,
+		Color3.fromRGB(82, 197, 255)
+	)
+
+	setupSplitBeam()
+end
+
+		local overlapParams = OverlapParams.new()
+		overlapParams.FilterType = Enum.RaycastFilterType.Include
+
+		local rayParams = RaycastParams.new()
+		rayParams.FilterType = Enum.RaycastFilterType.Exclude
+		rayParams.IgnoreWater = true
+
+		local images = {}
+
+		for _, obj in ipairs(model:GetDescendants()) do
+			if obj:IsA("ImageLabel") then
+				images[#images + 1] = {
+					object = obj,
+					position = obj.Position,
+					rotation = obj.Rotation
+				}
+			end
+		end
+
+		local spotlights = {}
+
+		for _, obj in ipairs(model:GetDescendants()) do
+			if obj:IsA("SpotLight") then
+				local parent = obj.Parent
+
+				if parent and parent:IsA("Attachment") then
+					spotlights[#spotlights + 1] = {
+						attachment = parent,
+						cframe = parent.CFrame
+					}
+				end
+			end
+		end
+
+		local redSpotlight
+		local blueSpotlight
+
+		for _, obj in ipairs(model:GetDescendants()) do
+			if obj:IsA("SpotLight") then
+				if obj.Name == "red" then
+					redSpotlight = obj
+				elseif obj.Name == "blue" then
+					blueSpotlight = obj
+				end
+			end
+		end
+
+		local redGui
+		local blueGui
+
+		local redParticleAttachment
+		local blueParticleAttachment
+
+		local redStartWorldY
+		local blueStartWorldY
+
+		local splitDistance = 18
+
+		local destroyed = false
+		local connection
+
+		local t = 0
+		local rotationTime = 0
+
+		local currentRotation = 0
+		local targetRotation = 0
+
+		local baseShakeStrength = 0.05
+		local baseRotationStrength = 4
+		
+		local orbitFinalPart
+local orbitFinalImages = {}
+local orbitFinalShakeTime = 0
+local orbitFinalRotation = 0
+local orbitFinalTargetRotation = 0
+local orbitFinalRotationTime = 0
+
+		local shakeStrength = baseShakeStrength
+		local rotationStrength = baseRotationStrength
+
+local shakeLoop = false
+local shakeMagnitude = 0
+local shakeLoopToken = 0
+
+local mergeShakeStrength = 0
+local mergeRotationStrength = 0
+
+		local spotlightRotation = 0
+		local spotlightSpeed = math.pi * 2 / 10
+
+		local entityMoving = false
+		local currentMoveSpeed = 0
+
+local guiFollowActive = false
+
+		local insideHitbox = false
+		local damageCooldown = 0
+
+		local effectCooldown = 0
+		local effectTriggered = false
+
+		local deathTweenStarted = false
+		local splitOnce = false
+
+		local mergeAfterDeath = false
+		local mergeAfterDeathCooldown = 0
+		local mergingAfterDeath = false
+
+		local cleanup
+
+		local function playDropParticles()
+			if destroyed or not model or not model.Parent then
+				return
+			end
+
+			split:Play()
+
+			for _, obj in ipairs(model:GetDescendants()) do
+				if obj:IsA("ParticleEmitter")
+					and string.find(obj.Name:lower(), "drop", 1, true) then
+
+					obj.Enabled = true
+
+					task.delay(0.5, function()
+						if obj and obj.Parent then
+							obj.Enabled = false
+						end
+					end)
+				end
+			end
+		end
+
+		local function tweenProperty(object, info, properties)
+			if object and object.Parent then
+				local tw = TweenService:Create(
+					object,
+					info,
+					properties
+				)
+
+				tw:Play()
+				return tw
+			end
+		end
+		
+		local function startShakeLoop()
+	shakeLoopToken += 1
+	local token = shakeLoopToken
+
+	shakeLoop = true
+
+	task.spawn(function()
+		while shakeLoop
+			and token == shakeLoopToken
+			and not destroyed do
+
+			if shakeMagnitude > 0 then
+				spawnShake:ShakeOnce(
+					shakeMagnitude,
+					5,
+					0.05,
+					0.07,
+					0,
+					0.8
+				)
+			end
+
+			task.wait(0.035)
+		end
+	end)
+end
+
+local function stopShakeLoop()
+	shakeLoop = false
+	shakeLoopToken += 1
+end
+
+local function startSplitBoost()
+	if destroyed or deathTweenStarted then
+		return
+	end
+
+	local info = TweenInfo.new(
+		2,
+		Enum.EasingStyle.Sine,
+		Enum.EasingDirection.In
+	)
+
+	local startSpotlightSpeed = spotlightSpeed
+	local targetSpotlightSpeed = startSpotlightSpeed * 30
+
+	for _, obj in ipairs(model:GetDescendants()) do
+		if obj:IsA("Sound") then
+			tweenProperty(
+				obj,
+				info,
+				{
+					Volume = 10,
+					PlaybackSpeed = 2
+				}
+			)
+
+		elseif obj:IsA("PointLight") then
+			tweenProperty(
+				obj,
+				info,
+				{
+					Brightness = 10,
+					Range = 25
+				}
+			)
+		end
+	end
+
+	task.spawn(function()
+		local elapsed = 0
+
+		while elapsed < 2
+			and not destroyed
+			and not deathTweenStarted do
+
+			local dt = RunService.RenderStepped:Wait()
+			elapsed += dt
+
+			local a =
+				math.clamp(elapsed / 2, 0, 1)
+
+			a = TweenService:GetValue(
+				a,
+				Enum.EasingStyle.Sine,
+				Enum.EasingDirection.In
+			)
+
+			shakeStrength =
+				baseShakeStrength +
+				(0.25 - baseShakeStrength) * a
+
+			rotationStrength =
+				baseRotationStrength +
+				(18 - baseRotationStrength) * a
+
+			spotlightSpeed =
+				startSpotlightSpeed +
+				(targetSpotlightSpeed - startSpotlightSpeed) * a
+		end
+
+		if not destroyed and not deathTweenStarted then
+			spotlightSpeed = targetSpotlightSpeed
+		end
+	end)
+end
+
+local function fadeTrail(trail)
+	if not trail or not trail.Parent then
+		return
+	end
+
+	local original = trail.Transparency
+	local elapsed = 0
+
+	task.spawn(function()
+		while elapsed < 4
+			and trail
+			and trail.Parent
+			and not destroyed do
+
+			local dt = RunService.RenderStepped:Wait()
+			elapsed += dt
+
+			local a = math.clamp(elapsed / 4, 0, 1)
+
+			a = TweenService:GetValue(
+				a,
+				Enum.EasingStyle.Sine,
+				Enum.EasingDirection.Out
+			)
+
+			local points = {}
+
+			for _, keypoint in ipairs(original.Keypoints) do
+				points[#points + 1] = NumberSequenceKeypoint.new(
+					keypoint.Time,
+					keypoint.Value + (1 - keypoint.Value) * a,
+					keypoint.Envelope
+				)
+			end
+
+			trail.Transparency = NumberSequence.new(points)
+		end
+
+		if trail and trail.Parent then
+			trail.Transparency = NumberSequence.new(1)
+			trail.Enabled = false
+		end
+	end)
+end
+
+local function tweenBeamToBlack()
+	local beam = splitBeam
+
+	if not beam
+		or not beam.Parent
+		or not beam:IsA("Beam") then
+		return
+	end
+
+	local elapsed = 0
+
+	local startColors = {
+		Color3.fromRGB(255, 66, 66),
+		Color3.fromRGB(66, 214, 255)
+	}
+
+	task.spawn(function()
+		while elapsed < 4
+			and beam
+			and beam.Parent
+			and not destroyed do
+
+			local dt = RunService.RenderStepped:Wait()
+			elapsed += dt
+
+			local a =
+				math.clamp(elapsed / 4, 0, 1)
+
+			a = TweenService:GetValue(
+				a,
+				Enum.EasingStyle.Sine,
+				Enum.EasingDirection.Out
+			)
+
+			local red =
+				startColors[1]:Lerp(
+					Color3.new(0, 0, 0),
+					a
+				)
+
+			local blue =
+				startColors[2]:Lerp(
+					Color3.new(0, 0, 0),
+					a
+				)
+
+			if beam
+				and beam.Parent
+				and beam:IsA("Beam") then
+
+				beam.Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, red),
+					ColorSequenceKeypoint.new(0.5, red),
+					ColorSequenceKeypoint.new(0.5001, blue),
+					ColorSequenceKeypoint.new(1, blue)
+				})
+
+				beam.Enabled = true
+			else
+				break
+			end
+		end
+
+		if beam
+			and beam.Parent
+			and beam:IsA("Beam") then
+
+			beam.Color = ColorSequence.new(
+				Color3.new(0, 0, 0)
+			)
+
+			beam.Enabled = true
+		end
+	end)
+end
+
+local function createMergedOrbitTrail()
+	if destroyed
+		or not model
+		or not model.Parent then
+		return
+	end
+
+	local main = model:FindFirstChild("Main", true)
+
+	if not main or not main:IsA("BasePart") then
+		return
+	end
+
+	if orbitPart then
+		orbitPart:Destroy()
+		orbitPart = nil
+	end
+
+	orbitPart = Instance.new("Part")
+	orbitPart.Name = "MergedOrbitTrailPart"
+	orbitPart.Size = Vector3.new(5, 5, 5)
+	orbitPart.Transparency = 1
+	orbitPart.Anchored = true
+	orbitPart.CanCollide = false
+	orbitPart.CanTouch = false
+	orbitPart.CanQuery = false
+	orbitPart.CastShadow = false
+	orbitPart.Parent = model
+	
+	for _, obj in ipairs(orbitPart:GetDescendants()) do
+	if obj:IsA("ParticleEmitter") and obj.Name == "Concak" then
+		obj:Destroy()
+	end
+end
+
+	task.spawn(function()
+	for i = 1, 3 do
+		for _, obj in ipairs(orbitPart:GetDescendants()) do
+			if obj:IsA("ParticleEmitter") and string.find(obj.Name:lower(), "drop", 1, true) then
+				obj.Enabled = false
+			end
+		end
+
+		if i < 3 then
+			task.wait(0.5)
+		end
+	end
+end)
+	
+	for _, template in ipairs(splitSoundTemplates) do
+	if template then
+		local sound = template:Clone()
+		sound.Parent = orbitPart
+	end
+end
+	
+		orbitMonsterAttachment = Instance.new("Attachment")
+orbitMonsterAttachment.Name = "MonsterGuiAttachment"
+orbitMonsterAttachment.Position = Vector3.zero
+orbitMonsterAttachment.Parent = orbitPart
+
+orbitDropAttachment = Instance.new("Attachment")
+orbitDropAttachment.Name = "DropParticleAttachment"
+orbitDropAttachment.Position = Vector3.zero
+orbitDropAttachment.Parent = orbitPart
+
+table.clear(orbitDropParticles)
+
+for _, template in ipairs(dropParticleTemplates) do
+	if template then
+		local particle = template:Clone()
+		particle.Enabled = true
+		particle.Parent = orbitDropAttachment
+
+		orbitDropParticles[#orbitDropParticles + 1] = particle
+	end
+end
+
+	if orbitMonsterGui then
+		orbitMonsterGui.Parent = orbitMonsterAttachment
+		orbitMonsterGui.Adornee = orbitMonsterAttachment
+		orbitMonsterGui.Enabled = true
+	end
+
+	orbitAtt0 = Instance.new("Attachment")
+	orbitAtt0.Name = "OrbitTrailAttachment0"
+	orbitAtt0.Position = Vector3.new(0, 0.3, 0)
+	orbitAtt0.Parent = orbitPart
+
+	orbitAtt1 = Instance.new("Attachment")
+	orbitAtt1.Name = "OrbitTrailAttachment1"
+	orbitAtt1.Position = Vector3.new(0, -0.3, 0)
+	orbitAtt1.Parent = orbitPart
+	
+	orbitAtt0.Position = Vector3.new(0, 6, 0)
+orbitAtt1.Position = Vector3.new(0, -6, 0)
+
+	local template = redTrailTemplate
+
+	if not template then
+		return
+	end
+
+	local trail = template:Clone()
+
+	if not trail:IsA("Trail") then
+		trail = trail:FindFirstChildWhichIsA("Trail", true)
+	end
+
+	if not trail then
+		return
+	end
+
+	trail.Attachment0 = orbitAtt0
+	trail.Attachment1 = orbitAtt1
+
+	trail.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(
+			0,
+			Color3.fromRGB(255, 66, 66)
+		),
+
+		ColorSequenceKeypoint.new(
+			0.5,
+			Color3.fromRGB(255, 66, 66)
+		),
+
+		ColorSequenceKeypoint.new(
+			0.5001,
+			Color3.fromRGB(66, 214, 255)
+		),
+
+		ColorSequenceKeypoint.new(
+			1,
+			Color3.fromRGB(66, 214, 255)
+		)
+	})
+
+	trail.Enabled = true
+	trail.Parent = orbitPart
+
+	orbitTrail = trail
+	orbitAngle = 0
+end
+
+local function createOrbitChaser()
+	if destroyed
+		or not orbitPart
+		or not orbitPart.Parent then
+		return
+	end
+
+	if orbitChaserPart then
+		orbitChaserPart:Destroy()
+		orbitChaserPart = nil
+	end
+
+	orbitChaserPart = orbitPart:Clone()
+	orbitChaserPart.Name = "MergedOrbitChaser"
+	orbitChaserPart.Anchored = true
+	orbitChaserPart.CanCollide = false
+	orbitChaserPart.CanTouch = false
+	orbitChaserPart.CanQuery = true
+	orbitChaserPart.CastShadow = false
+	orbitChaserPart.CFrame = orbitPart.CFrame
+	orbitChaserPart.Parent = model
+	
+	local main = model:FindFirstChild("Main", true)
+
+if beamTemplate
+	and main
+	and main:IsA("BasePart") then
+
+	local beam = beamTemplate:Clone()
+
+	if not beam:IsA("Beam") then
+		beam = beam:FindFirstChildWhichIsA("Beam", true)
+	end
+
+	if beam then
+		orbitChaserBeamAtt0 = Instance.new("Attachment")
+		orbitChaserBeamAtt0.Name = "ChaserBeamAttachment0"
+		orbitChaserBeamAtt0.Position = Vector3.zero
+		orbitChaserBeamAtt0.Parent = main
+
+		orbitChaserBeamAtt1 = Instance.new("Attachment")
+		orbitChaserBeamAtt1.Name = "ChaserBeamAttachment1"
+		orbitChaserBeamAtt1.Position = Vector3.zero
+		orbitChaserBeamAtt1.Parent = orbitChaserPart
+
+		beam.Attachment0 = orbitChaserBeamAtt0
+		beam.Attachment1 = orbitChaserBeamAtt1
+
+		beam.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(
+				0,
+				Color3.fromRGB(190, 105, 255)
+			),
+
+			ColorSequenceKeypoint.new(
+				0.5,
+				Color3.fromRGB(190, 105, 255)
+			),
+
+			ColorSequenceKeypoint.new(
+				0.5001,
+				Color3.fromRGB(82, 197, 255)
+			),
+
+			ColorSequenceKeypoint.new(
+				1,
+				Color3.fromRGB(82, 197, 255)
+			)
+		})
+
+		beam.Enabled = true
+		beam.Parent = model
+
+		orbitChaserBeam = beam
+	end
+end
+
+for _, obj in ipairs(orbitPart:GetDescendants()) do
+	if obj:IsA("Trail") then
+		obj.Color = ColorSequence.new(
+			Color3.fromRGB(255, 66, 66)
+		)
+	end
+end
+
+	orbitChaserImages = {}
+orbitChaserShakeTime = 0
+orbitChaserRotation = 0
+orbitChaserTargetRotation = 0
+orbitChaserRotationTime = 0
+
+for _, obj in ipairs(orbitChaserPart:GetDescendants()) do
+	if obj:IsA("ImageLabel") then
+		obj.Image = "rbxassetid://114789921267071"
+
+		orbitChaserImages[#orbitChaserImages + 1] = {
+			object = obj,
+			position = obj.Position,
+			rotation = obj.Rotation
+		}
+
+	elseif obj:IsA("ParticleEmitter") and obj.Name ~= "Concak" then
+		obj.Enabled = true
+
+		task.delay(0.5, function()
+			if obj and obj.Parent then
+				obj.Enabled = false
+			end
+		end)
+
+	elseif obj:IsA("Trail") then
+		obj.Color = ColorSequence.new(
+			Color3.fromRGB(82, 197, 255)
+		)
+	end
+end
+
+local pointLight = Instance.new("PointLight")
+pointLight.Name = "ChaserLight"
+pointLight.Range = 8
+pointLight.Brightness = 2
+pointLight.Color = Color3.fromRGB(82, 197, 255)
+pointLight.Parent = orbitChaserPart
+
+split.PlaybackSpeed = 1
+split.Volume = 2
+	split:Play()
+
+	for _, obj in ipairs(orbitChaserPart:GetDescendants()) do
+		if obj:IsA("Sound")
+			and string.find(obj.Name:lower(), "split", 1, true) then
+
+			obj:Play()
+			break
+		end
+	end
+
+	orbitChaserInside = false
+	orbitChaserDamageCooldown = 0
+end
+
+local orbitFinalFlightConnection
+
+local function createFinalExplosion(position)
+	local explosion = Instance.new("Explosion")
+	explosion.Position = position
+	explosion.BlastRadius = 8
+	explosion.BlastPressure = 6
+	explosion.DestroyJointRadiusPercent = 0
+	explosion.Parent = workspace
+
+	local sound = Instance.new("Sound")
+	sound.Name = "Explosion"
+	sound.SoundId = "rbxassetid://121250496298953"
+	sound.Volume = 1
+	sound.RollOffMaxDistance = 30
+	sound.Parent = explosion
+	sound:Play()
+	
+	spawnShake:ShakeOnce(
+					7,
+					5,
+					0.05,
+					0.3,
+					0,
+					0.8
+				)
+
+	local character = player.Character
+	local humanoid =
+		character and
+		character:FindFirstChildOfClass("Humanoid")
+
+	local hrp =
+		character and
+		character:FindFirstChild("HumanoidRootPart")
+
+	if humanoid
+		and hrp
+		and humanoid.Health > 0 then
+
+		if (hrp.Position - position).Magnitude <= 8 then
+			humanoid:TakeDamage(15)
+		end
+	end
+end
+
+local function getRandomHorizontalDirection()
+	local angle = math.random() * math.pi * 2
+
+	return Vector3.new(
+		math.cos(angle),
+		0,
+		math.sin(angle)
+	).Unit
+end
+
+local function startFinalChaserFlight()
+	if destroyed
+		or not orbitFinalPart
+		or not orbitFinalPart.Parent then
+		return
+	end
+
+	if orbitFinalFlightConnection then
+		orbitFinalFlightConnection:Disconnect()
+		orbitFinalFlightConnection = nil
+	end
+
+	orbitFinalFlying = true
+
+	orbitFinalVelocity =
+		getRandomHorizontalDirection() * 20
+
+	local rayParams = RaycastParams.new()
+
+	rayParams.FilterType =
+		Enum.RaycastFilterType.Exclude
+
+	rayParams.IgnoreWater = true
+
+	orbitFinalFlightConnection =
+		RunService.RenderStepped:Connect(function(dt)
+
+			if destroyed
+				or not orbitFinalFlying
+				or not orbitFinalPart
+				or not orbitFinalPart.Parent then
+
+				if orbitFinalFlightConnection then
+					orbitFinalFlightConnection:Disconnect()
+					orbitFinalFlightConnection = nil
+				end
+
+				return
+			end
+
+			-- Model của entity không được tính là vật cản,
+			-- nhưng LocalPlayer vẫn được tính.
+			rayParams.FilterDescendantsInstances = {
+				model,
+				orbitFinalPart
+			}
+
+			local movement =
+				orbitFinalVelocity * dt
+
+			local result = workspace:Raycast(
+				orbitFinalPart.Position,
+				movement,
+				rayParams
+			)
+
+			if result then
+				local hitPosition = result.Position
+				local normal = result.Normal
+
+				-- Đặt part sát bề mặt vật cản/player
+				orbitFinalPart.Position =
+					hitPosition +
+					normal * 0.1
+
+				-- Tạo Explosion ngay điểm va chạm
+				createFinalExplosion(hitPosition)
+
+				-- Đổi hướng ngang random
+				orbitFinalVelocity =
+					getRandomHorizontalDirection() * 20
+
+				-- Đẩy nhẹ khỏi bề mặt để tránh raycast
+				-- trúng lại cùng một điểm ở frame kế tiếp.
+				orbitFinalPart.Position +=
+					orbitFinalVelocity.Unit * 0.05
+
+			else
+				orbitFinalPart.Position += movement
+			end
+		end)
+end
+
+local playFinalMergeEffect
+local createFinalPlayerBeam
+
+local function endFinalChaser()
+	if destroyed or finalChaserEnding then
+		return
+	end
+
+	finalChaserEnding = true
+	orbitFinalFlying = false
+
+	-- Ngừng FinalChaser bay
+	if orbitFinalFlightConnection then
+		orbitFinalFlightConnection:Disconnect()
+		orbitFinalFlightConnection = nil
+	end
+
+	-- Ngừng ChaserPart follow player
+	orbitChaserInside = false
+	orbitChaserDamageCooldown = 0
+
+	local main = model:FindFirstChild("Main", true)
+
+	if not main
+		or not main:IsA("BasePart")
+		or not main.Parent then
+		return
+	end
+	
+	local main = model:FindFirstChild("Main", true)
+
+	local info = TweenInfo.new(
+	3,
+	Enum.EasingStyle.Exponential,
+	Enum.EasingDirection.In
+)
+
+	local tweens = {}
+	
+	local suck = Instance.new("Sound") 
+	suck.Volume = 2
+	suck.RollOffMaxDistance = 150
+	suck.Parent = main
+	suck.SoundId = "rbxassetid://129456040607483" 
+	
+	local eaten = Instance.new("Sound") 
+ eaten.Volume = 2
+	eaten.RollOffMaxDistance = 100
+	eaten.Parent = main
+	eaten.SoundId = "rbxassetid://117451581248292" 
+suck:Play() 
+
+	if orbitChaserPart
+		and orbitChaserPart.Parent then
+
+		tweens[#tweens + 1] =
+			TweenService:Create(
+				orbitChaserPart,
+				info,
+				{
+					CFrame = main.CFrame
+				}
+			)
+
+		tweens[#tweens]:Play()
+	end
+
+	if orbitFinalPart
+		and orbitFinalPart.Parent then
+
+		tweens[#tweens + 1] =
+			TweenService:Create(
+				orbitFinalPart,
+				info,
+				{
+					CFrame = main.CFrame
+				}
+			)
+
+		tweens[#tweens]:Play()
+	end
+	
+	-- Fade out Main trong 2 giây
+	local fadeInfo = TweenInfo.new(
+		3,
+		Enum.EasingStyle.Exponential,
+		Enum.EasingDirection.In
+	)
+
+	for _, obj in ipairs(main:GetDescendants()) do
+		if obj:IsA("PointLight")  then
+
+			TweenService:Create(
+				obj,
+				fadeInfo,
+				{
+					Brightness = 0
+				}
+			):Play()
+		end
+	end
+
+	task.wait(3)
+	
+	if light then
+						light:Destroy()
+					end
+
+					for _, data in ipairs(removed) do
+						if data.instance then
+							data.instance.Parent = data.parent
+						end
+					end
+	
+	local sound = theme
+sound.TimePosition = 160 -- 2 phút 40 giây = 160s
+	
+	eaten:Play() 
+
+orbitChaserPart:Destroy()
+orbitChaserPart = nil
+
+orbitFinalPart:Destroy()
+orbitFinalPart = nil
+
+playFinalMergeEffect()
+
+task.spawn(function()
+	task.wait(2)
+
+	if destroyed
+		or not model
+		or not model.Parent then
+		return
+	end
+
+	createFinalPlayerBeam()
+end)
+
+	table.clear(orbitChaserImages)
+	table.clear(orbitFinalImages)
+end
+
+local function createFinalChaser()
+	if destroyed
+		or not orbitChaserPart
+		or not orbitChaserPart.Parent
+		or not orbitPart
+		or not orbitPart.Parent then
+		return
+	end
+
+	if orbitFinalPart then
+		orbitFinalPart:Destroy()
+		orbitFinalPart = nil
+	end
+
+	local finalPosition = orbitPart.CFrame
+
+	orbitFinalPart = orbitChaserPart:Clone()
+	orbitFinalPart.Name = "FinalChaser"
+	orbitFinalPart.Anchored = true
+	orbitFinalPart.CanCollide = false
+	orbitFinalPart.CanTouch = false
+	orbitFinalPart.CanQuery = true
+	orbitFinalPart.CastShadow = false
+	orbitFinalPart.CFrame = finalPosition
+	orbitFinalPart.Parent = model
+	
+	local main = model:FindFirstChild("Main", true)
+
+if beamTemplate
+	and main
+	and main:IsA("BasePart") then
+
+	local beam = beamTemplate:Clone()
+
+	if not beam:IsA("Beam") then
+		beam = beam:FindFirstChildWhichIsA("Beam", true)
+	end
+
+	if beam then
+		orbitFinalBeamAtt0 = Instance.new("Attachment")
+		orbitFinalBeamAtt0.Name = "FinalChaserBeamAttachment0"
+		orbitFinalBeamAtt0.Position = Vector3.zero
+		orbitFinalBeamAtt0.Parent = main
+
+		orbitFinalBeamAtt1 = Instance.new("Attachment")
+		orbitFinalBeamAtt1.Name = "FinalChaserBeamAttachment1"
+		orbitFinalBeamAtt1.Position = Vector3.zero
+		orbitFinalBeamAtt1.Parent = orbitFinalPart
+
+		beam.Attachment0 = orbitFinalBeamAtt0
+		beam.Attachment1 = orbitFinalBeamAtt1
+
+		beam.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(
+				0,
+				Color3.fromRGB(190, 105, 255)
+			),
+
+			ColorSequenceKeypoint.new(
+				0.5,
+				Color3.fromRGB(190, 105, 255)
+			),
+
+			ColorSequenceKeypoint.new(
+				0.5001,
+				Color3.fromRGB(255, 66, 66)
+			),
+
+			ColorSequenceKeypoint.new(
+				1,
+				Color3.fromRGB(255, 66, 66)
+			)
+		})
+
+		beam.Enabled = true
+		beam.Parent = model
+
+		orbitFinalBeam = beam
+	end
+end
+
+	orbitFinalImages = {}
+	orbitFinalShakeTime = 0
+	orbitFinalRotation = 0
+	orbitFinalTargetRotation = 0
+	orbitFinalRotationTime = 0
+
+	for _, obj in ipairs(orbitFinalPart:GetDescendants()) do
+		if obj:IsA("ImageLabel") then
+			obj.Image = "rbxassetid://119987238393289"
+
+			orbitFinalImages[#orbitFinalImages + 1] = {
+				object = obj,
+				position = obj.Position,
+				rotation = obj.Rotation
+			}
+
+		elseif obj:IsA("PointLight") then
+			obj.Color = Color3.fromRGB(255, 66, 66)
+
+		elseif obj:IsA("Trail") then
+			obj.Color = ColorSequence.new(
+				Color3.fromRGB(255, 66, 66)
+			)
+		end
+	end
+
+	-- Xóa các beam/attachment liên quan tới chaser cũ
+	for _, obj in ipairs(orbitFinalPart:GetDescendants()) do
+		if obj:IsA("Beam") then
+			obj.Enabled = false
+		end
+	end
+
+	if orbitPart and orbitPart.Parent then
+		orbitPart:Destroy()
+		orbitPart = nil
+	end
+end
+
+playFinalMergeEffect = function()
+	if destroyed
+		or not model
+		or not model.Parent then
+		return
+	end
+
+	local main = model:FindFirstChild("Main", true)
+
+	if not main or not main:IsA("BasePart") then
+		return
+	end
+
+	-- Bật tất cả ParticleEmitter có chữ "drop" trong tên
+	for _, obj in ipairs(main:GetDescendants()) do
+		if obj:IsA("ParticleEmitter")
+			and string.find(obj.Name:lower(), "drop", 1, true) then
+
+			obj.Enabled = true
+
+			task.delay(1, function()
+				if obj and obj.Parent then
+					obj.Enabled = false
+				end
+			end)
+		end
+	end
+
+	-- Play split sound
+	split.Volume = 5
+split.Name = "split"
+split.PlaybackSpeed = 1
+split.RollOffMaxDistance = 500
+split:Play() 
+
+	-- Screen shake mạnh 1 lần
+	spawnShake:ShakeOnce(
+		9,
+		6,
+		0.08,
+		2,
+		0,
+		1
+	)
+end
+
+local outOfRangeTriggered = false
+
+local function fadeParticleEmitter(emitter, duration)
+	local startSequence = emitter.Transparency
+
+	local driver = Instance.new("NumberValue")
+	driver.Value = 0
+
+	local connection
+
+	connection = driver:GetPropertyChangedSignal("Value"):Connect(function()
+		if not emitter or not emitter.Parent then
+			if connection then
+				connection:Disconnect()
+			end
+			driver:Destroy()
+			return
+		end
+
+		local alpha = driver.Value
+		local keypoints = {}
+
+		for _, keypoint in ipairs(startSequence.Keypoints) do
+			table.insert(
+				keypoints,
+				NumberSequenceKeypoint.new(
+					keypoint.Time,
+					keypoint.Value + (1 - keypoint.Value) * alpha,
+					keypoint.Envelope
+				)
+			)
+		end
+
+		emitter.Transparency = NumberSequence.new(keypoints)
+	end)
+
+	local tween = TweenService:Create(
+		driver,
+		TweenInfo.new(
+			duration,
+			Enum.EasingStyle.Linear,
+			Enum.EasingDirection.Out
+		),
+		{
+			Value = 1
+		}
+	)
+
+	tween.Completed:Connect(function()
+		if connection then
+			connection:Disconnect()
+		end
+
+		if emitter and emitter.Parent then
+			emitter.Transparency = NumberSequence.new(1)
+		end
+
+		driver:Destroy()
+	end)
+
+	tween:Play()
+
+	return tween
+end
+
+local function fadeOutAndCleanup()
+	if destroyed or outOfRangeTriggered then
+		return
+	end
+
+	outOfRangeTriggered = true
+
+	task.spawn(function()
+		task.wait(2)
+
+		if destroyed
+			or not model
+			or not model.Parent then
+			return
+		end
+
+		local fadeInfo = TweenInfo.new(
+			4,
+			Enum.EasingStyle.Linear,
+			Enum.EasingDirection.Out
+		)
+
+		local tweens = {}
+
+		for _, obj in ipairs(model:GetDescendants()) do
+
+	if obj:IsA("ParticleEmitter") then
+		fadeParticleEmitter(obj, 4)
+
+	elseif obj:IsA("PointLight")
+		or obj:IsA("SpotLight")
+		or obj:IsA("SurfaceLight") then
+
+		TweenService:Create(
+			obj,
+			TweenInfo.new(4),
+			{
+				Range = 0
+			}
+		):Play()
+
+	elseif obj:IsA("ImageLabel") then
+
+		TweenService:Create(
+			obj,
+			TweenInfo.new(4),
+			{
+				ImageTransparency = 1
+			}
+		):Play()
+
+	elseif obj:IsA("Sound") then
+
+		TweenService:Create(
+			obj,
+			TweenInfo.new(4),
+			{
+				PlaybackSpeed = 0
+			}
+		):Play()
+	end
+end
+
+		task.wait(4)
+
+		if not destroyed then
+			cleanup()
+		end
+	end)
+end
+
+createFinalPlayerBeam = function()
+
+	if destroyed
+		or not model
+		or not model.Parent then
+		return
+	end
+
+	local main = model:FindFirstChild("Main", true)
+
+	local character = player.Character
+	local humanoid =
+		character and
+		character:FindFirstChildOfClass("Humanoid")
+
+	local hrp =
+		character and
+		character:FindFirstChild("HumanoidRootPart")
+
+	if not main
+		or not main:IsA("BasePart")
+		or not humanoid
+		or humanoid.Health <= 0
+		or not hrp then
+		return
+	end
+
+	if (hrp.Position - main.Position).Magnitude >= 20 then
+	task.spawn(function() 
+		fadeOutAndCleanup()
+		end) 
+		
+		return
+	end
+
+	if not beamTemplate then
+		return
+	end
+
+	local human = game.Players.LocalPlayer.Character.HumanoidRootPart
+
+	local chained = Instance.new("Sound")
+	chained.Volume = 2
+	chained.RollOffMaxDistance = 100
+	chained.Parent = human
+	chained.SoundId = "rbxassetid://100133789671771"
+	chained:Play()
+
+	local beam = beamTemplate:Clone()
+
+	if not beam:IsA("Beam") then
+		beam = beam:FindFirstChildWhichIsA("Beam", true)
+	end
+
+	if not beam then
+		return
+	end
+
+	local att0 = Instance.new("Attachment")
+	att0.Name = "FinalPlayerBeamAttachment0"
+	att0.Position = Vector3.zero
+	att0.Parent = main
+
+	local att1 = Instance.new("Attachment")
+	att1.Name = "FinalPlayerBeamAttachment1"
+	att1.Position = Vector3.zero
+	att1.Parent = hrp
+
+	beam.Attachment0 = att0
+	beam.Attachment1 = att1
+
+	beam.Color = ColorSequence.new(
+		Color3.fromRGB(190, 105, 255)
+	)
+
+	beam.Enabled = true
+	beam.Parent = main
+
+	hrp.Anchored = true
+
+	spawnShake:ShakeOnce(
+		5,
+		10,
+		0.06,
+		0.5,
+		0,
+		1
+	)
+
+	task.spawn(function()
+
+		task.wait(1)
+
+		if destroyed
+			or not model
+			or not model.Parent
+			or not hrp
+			or not hrp.Parent then
+			return
+		end
+
+		local playerTween = TweenService:Create(
+			hrp,
+			TweenInfo.new(
+				1,
+				Enum.EasingStyle.Sine,
+				Enum.EasingDirection.Out
+			),
+			{
+				CFrame =
+					hrp.CFrame +
+					Vector3.new(0, 5, 0)
+			}
+		)
+
+		playerTween:Play()
+		playerTween.Completed:Wait()
+
+		if destroyed
+			or not model
+			or not model.Parent
+			or not hrp
+			or not hrp.Parent then
+			return
+		end
+
+		task.wait(1)
+
+		if destroyed
+			or not model
+			or not model.Parent then
+			return
+		end
+
+		--------------------------------------------------
+		-- SPHERE
+		--------------------------------------------------
+
+		local sphere = Instance.new("Part")
+		sphere.Name = "FinalSphere"
+		sphere.Shape = Enum.PartType.Ball
+		sphere.Size = Vector3.new(7, 7, 7)
+		sphere.Color = Color3.fromRGB(190, 105, 255)
+		sphere.Material = Enum.Material.Neon
+		sphere.Transparency = 1
+		sphere.Anchored = true
+		sphere.CanCollide = false
+		sphere.CanTouch = false
+		sphere.CanQuery = false
+		sphere.CastShadow = false
+		sphere.CFrame = main.CFrame
+		sphere.Parent = model
+
+		local ucu = Instance.new("PointLight")
+		ucu.Brightness = 2
+		ucu.Color = Color3.fromRGB(190, 105, 255)
+		ucu.Range = 10
+		ucu.Parent = sphere
+
+		local orb = Instance.new("Sound")
+		orb.Volume = 2
+		orb.RollOffMaxDistance = 200
+		orb.Parent = sphere
+		orb.SoundId = "rbxassetid://140576516515813"
+		orb:Play()
+
+		local sphereFade = TweenService:Create(
+			sphere,
+			TweenInfo.new(
+				1,
+				Enum.EasingStyle.Sine,
+				Enum.EasingDirection.Out
+			),
+			{
+				Transparency = 0
+			}
+		)
+
+		sphereFade:Play()
+		sphereFade.Completed:Wait()
+
+		if destroyed
+			or not model
+			or not model.Parent
+			or not sphere
+			or not sphere.Parent then
+			return
+		end
+
+		--------------------------------------------------
+		-- SPHERE BEAM
+		--------------------------------------------------
+
+		local sphereBeam = beamTemplate:Clone()
+
+		if not sphereBeam:IsA("Beam") then
+			sphereBeam =
+				sphereBeam:FindFirstChildWhichIsA(
+					"Beam",
+					true
+				)
+		end
+
+		if not sphereBeam then
+			return
+		end
+
+		local sphereAtt0 = Instance.new("Attachment")
+		sphereAtt0.Name = "SphereBeamAttachment0"
+		sphereAtt0.Position = Vector3.zero
+		sphereAtt0.Parent = main
+
+		local sphereAtt1 = Instance.new("Attachment")
+		sphereAtt1.Name = "SphereBeamAttachment1"
+		sphereAtt1.Position = Vector3.zero
+		sphereAtt1.Parent = sphere
+
+		sphereBeam.Attachment0 = sphereAtt0
+		sphereBeam.Attachment1 = sphereAtt1
+
+		sphereBeam.Color = ColorSequence.new(
+			Color3.fromRGB(190, 105, 255)
+		)
+
+		sphereBeam.Enabled = true
+		sphereBeam.Parent = main
+
+		--------------------------------------------------
+		-- BAY SANG BÊN
+		--------------------------------------------------
+
+		local targetCFrame =
+			main.CFrame *
+			CFrame.new(20, 3, 0)
+
+		local sphereTween = TweenService:Create(
+			sphere,
+			TweenInfo.new(
+				2,
+				Enum.EasingStyle.Quint,
+				Enum.EasingDirection.InOut
+			),
+			{
+				CFrame = targetCFrame
+			}
+		)
+
+		sphereTween:Play()
+
+		sphereTween.Completed:Wait()
+
+		if destroyed
+			or not sphere
+			or not sphere.Parent then
+			return
+		end
+
+		task.wait(1.5)
+
+		if destroyed
+			or not sphere
+			or not sphere.Parent then
+			return
+		end
+
+		--------------------------------------------------
+		-- SOUND
+		--------------------------------------------------
+
+		local charge = Instance.new("Sound")
+		charge.Volume = 2
+		charge.RollOffMaxDistance = 200
+		charge.Parent = sphere
+		charge.SoundId = "rbxassetid://119750858019376"
+
+		local boom = Instance.new("Sound")
+		boom.Volume = 2
+		boom.RollOffMaxDistance = 100000000000000000
+		boom.Parent = workspace
+		boom.SoundId = "rbxassetid://9043176424"
+
+		--------------------------------------------------
+		-- LẤY HEAD HIỆN TẠI
+		--------------------------------------------------
+
+		character = player.Character
+
+		humanoid =
+			character and
+			character:FindFirstChildOfClass("Humanoid")
+
+		local head =
+			character and
+			character:FindFirstChild("Head")
+
+		if not humanoid
+			or humanoid.Health <= 0
+			or not head then
+			return
+		end
+
+		--------------------------------------------------
+		-- SHAKE SYSTEM
+		--------------------------------------------------
+
+		local shakeLoop = false
+		local shakeToken = 0
+		local shakeMagnitude = 0
+
+		local function startShake()
+
+			shakeToken += 1
+
+			local token = shakeToken
+
+			shakeLoop = true
+			shakeMagnitude = 0
+
+			task.spawn(function()
+
+				local elapsed = 0
+
+				while shakeLoop
+					and token == shakeToken
+					and not destroyed
+					and sphere
+					and sphere.Parent do
+
+					local dt =
+						RunService.RenderStepped:Wait()
+
+					elapsed += dt
+
+					local alpha =
+						math.clamp(
+							elapsed / 6,
+							0,
+							1
+						)
+
+					alpha = TweenService:GetValue(
+						alpha,
+						Enum.EasingStyle.Exponential,
+						Enum.EasingDirection.In
+					)
+
+					shakeMagnitude =
+						20 * alpha
+
+					if shakeMagnitude > 0 then
+
+						spawnShake:ShakeOnce(
+							shakeMagnitude,
+							8,
+							0.04,
+							0.08,
+							0,
+							1
+						)
+
+					end
+				end
+			end)
+		end
+
+		local function fadeShake()
+
+			if not shakeLoop then
+				return
+			end
+
+			shakeToken += 1
+
+			local startMagnitude =
+				shakeMagnitude
+
+			task.spawn(function()
+
+				local elapsed = 0
+
+				while elapsed < 3
+					and not destroyed do
+
+					local dt =
+						RunService.RenderStepped:Wait()
+
+					elapsed += dt
+
+					local alpha =
+						math.clamp(
+							elapsed / 3,
+							0,
+							1
+						)
+
+					alpha = TweenService:GetValue(
+						alpha,
+						Enum.EasingStyle.Quad,
+						Enum.EasingDirection.Out
+					)
+
+					shakeMagnitude =
+						startMagnitude *
+						(1 - alpha)
+
+					if shakeMagnitude > 0 then
+
+						spawnShake:ShakeOnce(
+							shakeMagnitude,
+							8,
+							0.04,
+							0.08,
+							0,
+							1
+						)
+
+					end
+				end
+
+				shakeMagnitude = 0
+				shakeLoop = false
+			end)
+		end
+
+		--------------------------------------------------
+		-- TWEEN TỚI HEAD
+		--------------------------------------------------
+
+		local targetCFrame =
+			CFrame.new(head.Position)
+
+		local hitHead = false
+		local hitConnection
+
+		local function hitHeadNow()
+
+			if hitHead then
+				return
+			end
+			
+			boom:Play()
+
+			hitHead = true
+
+			if hitConnection then
+				hitConnection:Disconnect()
+				hitConnection = nil
+			end
+
+			charge:Stop()
+
+			fadeShake()
+
+			if sphere
+				and sphere.Parent then
+				sphere:Destroy()
+				sphere = nil
+			end
+
+			if humanoid
+				and humanoid.Parent
+				and humanoid.Health > 0 then
+
+				humanoid.Health = 0
+
+				local stats =
+					game.ReplicatedStorage.GameStats:FindFirstChild(
+						"Player_" ..
+						game.Players.LocalPlayer.Name
+					)
+
+				if stats
+					and stats:FindFirstChild("Total")
+					and stats.Total:FindFirstChild("DeathCause") then
+
+					stats.Total.DeathCause.Value =
+						"SP-1"
+				end
+			end
+		end
+
+		--------------------------------------------------
+		-- CHECK CHẠM HEAD LIÊN TỤC
+		--------------------------------------------------
+
+		hitConnection =
+			RunService.RenderStepped:Connect(function()
+
+				if hitHead then
+					return
+				end
+
+				if destroyed
+					or not sphere
+					or not sphere.Parent
+					or not head
+					or not head.Parent then
+
+					if hitConnection then
+						hitConnection:Disconnect()
+						hitConnection = nil
+					end
+
+					return
+				end
+
+				local distance =
+					(sphere.Position - head.Position).Magnitude
+
+				if distance <= 3.5 then
+					hitHeadNow()
+				end
+			end)
+
+		--------------------------------------------------
+		-- BẮT ĐẦU SHAKE + TWEEN
+		--------------------------------------------------
+
+		startShake()
+
+		charge:Play()
+
+		local tween = TweenService:Create(
+			sphere,
+			TweenInfo.new(
+				6,
+				Enum.EasingStyle.Exponential,
+				Enum.EasingDirection.In
+			),
+			{
+				CFrame = targetCFrame
+			}
+		)
+
+		tween:Play()
+
+		tween.Completed:Connect(function()
+
+			if hitHead then
+				return
+			end
+
+			hitHeadNow()
+		end)
+	end)
+end
+
+local merged
+
+		local function startDeathTween()
+	if destroyed or deathTweenStarted then
+		return
+	end
+	
+	merged = Instance.new("Sound") 
+	merged.Volume = 2
+	merged.RollOffMaxDistance = 200
+	merged.Parent = model.Main
+	merged.SoundId = "rbxassetid://116644751820648" 
+
+	deathTweenStarted = true
+
+	entityMoving = false
+
+	local shakeStartMagnitude = shakeMagnitude
+
+	task.spawn(function()
+		local elapsed = 0
+
+		while elapsed < 4
+			and not destroyed do
+
+			local dt = RunService.RenderStepped:Wait()
+			elapsed += dt
+
+			local a = math.clamp(elapsed / 4, 0, 1)
+
+			a = TweenService:GetValue(
+				a,
+				Enum.EasingStyle.Sine,
+				Enum.EasingDirection.Out
+			)
+
+			shakeMagnitude =
+				shakeStartMagnitude * (1 - a)
+		end
+
+		shakeMagnitude = 0
+		stopShakeLoop()
+	end)
+
+	destroySplitHitboxes()
+
+	fadeTrail(redTrail)
+	fadeTrail(blueTrail)
+	tweenBeamToBlack()
+
+	mergeAfterDeath = false
+	mergeAfterDeathCooldown = 0
+	mergingAfterDeath = false
+
+	local info = TweenInfo.new(
+		4,
+		Enum.EasingStyle.Sine,
+		Enum.EasingDirection.Out
+	)
+
+	local elapsed = 0
+
+	local startShake = shakeStrength
+	local startRotation = rotationStrength
+	local startSpotlightSpeed = spotlightSpeed
+	local startMoveSpeed = currentMoveSpeed
+
+	local sounds = {}
+	local imagesToTween = {}
+	local lights = {}
+
+	for _, obj in ipairs(model:GetDescendants()) do
+		if obj:IsA("Sound") then
+			sounds[#sounds + 1] = obj
+
+		elseif obj:IsA("ImageLabel") then
+			imagesToTween[#imagesToTween + 1] = obj
+
+		elseif obj:IsA("PointLight")
+			or obj:IsA("SpotLight")
+			or obj:IsA("SurfaceLight") then
+
+			lights[#lights + 1] = obj
+
+		elseif obj:IsA("ParticleEmitter") then
+			obj.Enabled = false
+		end
+	end
+
+	for _, sound in ipairs(sounds) do
+		tweenProperty(
+			sound,
+			info,
+			{
+				Volume = 0,
+				PlaybackSpeed = 0
+			}
+		)
+	end
+
+	for _, image in ipairs(imagesToTween) do
+		tweenProperty(
+			image,
+			info,
+			{
+				ImageColor3 = Color3.new(0, 0, 0)
+			}
+		)
+	end
+
+	for _, light in ipairs(lights) do
+		tweenProperty(
+			light,
+			info,
+			{
+				Brightness = 0
+			}
+		)
+
+		task.delay(4, function()
+			if light and light.Parent then
+				light.Enabled = false
+			end
+		end)
+	end
+
+	-- SPLIT DISTANCE TWEEN CHẠY ĐỘC LẬP
+	task.spawn(function()
+		local splitElapsed = 0
+		local startDistance = splitDistance
+
+		while splitElapsed < 4
+			and not destroyed
+			and model
+			and model.Parent do
+
+			local dt = RunService.RenderStepped:Wait()
+			splitElapsed += dt
+
+			local a =
+				math.clamp(splitElapsed / 4, 0, 1)
+
+			a = TweenService:GetValue(
+				a,
+				Enum.EasingStyle.Sine,
+				Enum.EasingDirection.Out
+			)
+
+			splitDistance =
+				startDistance * (1 - a)
+		end
+
+		if destroyed
+			or not model
+			or not model.Parent then
+			return
+		end
+
+		splitDistance = 0
+
+mergingAfterDeath = true
+guiFollowActive = false
+
+mergeShakeStrength = baseShakeStrength * 3
+mergeRotationStrength = baseRotationStrength * 3
+
+task.spawn(function()
+	createMergedOrbitTrail()
+
+	task.wait(7)
+
+	if destroyed
+		or not model
+		or not model.Parent
+		or not orbitPart
+		or not orbitPart.Parent then
+		return
+	end
+
+	for _, obj in ipairs(orbitPart:GetDescendants()) do
+		if obj:IsA("ImageLabel") then
+			obj.Image = "rbxassetid://119987238393289"
+		end
+	end
+
+	createOrbitChaser()
+
+	task.wait(15)
+
+	if destroyed
+		or not model
+		or not model.Parent
+		or not orbitPart
+		or not orbitPart.Parent
+		or not orbitChaserPart
+		or not orbitChaserPart.Parent then
+		return
+	end
+
+	createFinalChaser()
+
+if orbitFinalPart
+	and orbitFinalPart.Parent then
+
+	startFinalChaserFlight()
+
+	task.spawn(function()
+		task.wait(30)
+
+		if destroyed
+			or not orbitFinalPart
+			or not orbitFinalPart.Parent then
+			return
+		end
+
+		endFinalChaser()
+	end)
+end
+end)
+
+-- MERGE EFFECTS
+for _, obj in ipairs(model:GetDescendants()) do
+	if obj:IsA("ImageLabel") then
+	obj.ImageColor3 = Color3.fromRGB(142,142,142)
+
+	if obj.Parent and obj.Parent.Name == "MonsterGui" then
+		obj.Image = "rbxassetid://91877017721425"
+	end
+	
+merged:Play() 
+
+	elseif obj:IsA("PointLight") then
+	obj.Enabled = true
+	obj.Brightness = 10
+	obj.Range = 0
+
+	obj:GetPropertyChangedSignal("Enabled"):Connect(function()
+		if obj.Parent and not obj.Enabled then
+			obj.Enabled = true
+		end
+	end)
+
+	TweenService:Create(
+		obj,
+		TweenInfo.new(
+			1.5,
+			Enum.EasingStyle.Sine,
+			Enum.EasingDirection.Out
+		),
+		{
+			Range = 15
+		}
+	):Play()
+
+	elseif obj:IsA("Sound") then
+		obj.PlaybackSpeed = 1.5
+		obj.Playing = true
+		obj.Volume = 2
+		
+		task.spawn(function() 
+		task.wait(4)
+		local clone = obj:Clone()
+		clone.Parent = obj.Parent
+		end) 
+
+	elseif obj:IsA("ParticleEmitter") then
+		local name = obj.Name:lower()
+
+		if string.find(name, "drop", 1, true) then
+		if orbitPart and obj:IsDescendantOf(orbitPart) then
+	continue
+end
+
+if orbitChaserPart and obj:IsDescendantOf(orbitChaserPart) then
+	continue
+end
+
+			obj.Enabled = true
+
+			local clone = obj:Clone()
+			clone.Name = "Concak" 
+			clone.Color = ColorSequence.new(
+				Color3.fromRGB(217, 145, 255)
+			)
+			clone.Rate = 1000
+			clone.Drag = -10
+			clone.Enabled = true
+			clone.Parent = obj.Parent
+
+			task.delay(1, function()
+				if obj and obj.Parent then
+					obj.Enabled = false
+				end
+			end)
+		end
+
+		local attachment = obj.Parent
+
+		if attachment
+			and attachment:IsA("Attachment")
+			and attachment.Name == "Rings" then
+
+			obj.Enabled = true
+			obj.Texture = "rbxassetid://91877017721425" 
+			obj.Drag = -10
+			obj.Rate = 100
+			obj.Speed = NumberRange.new(5, 5)
+		end
+	end
+end
+
+-- BẬT LẠI SHAKE + ROTATE, X2 ĐỘ MẠNH GỐC
+-- BẬT LẠI SHAKE + ROTATE KHI MERGE
+mergeShakeStrength = baseShakeStrength * 3
+mergeRotationStrength = baseRotationStrength * 3
+
+		if splitBeam then
+			splitBeam:Destroy()
+			splitBeam = nil
+		end
+
+		if splitBeamAtt0 then
+			splitBeamAtt0:Destroy()
+			splitBeamAtt0 = nil
+		end
+
+		if splitBeamAtt1 then
+			splitBeamAtt1:Destroy()
+			splitBeamAtt1 = nil
+		end
+
+		for _, obj in ipairs(model:GetDescendants()) do
+			if obj:IsA("BillboardGui") then
+
+				if obj.Name == "RedSplit"
+					or obj.Name == "BlueSplit" then
+
+					obj.Enabled = false
+
+				elseif obj.Name == "MonsterGui" then
+					obj.Enabled = true
+
+					local image =
+						obj:FindFirstChildWhichIsA(
+							"ImageLabel",
+							true
+						)
+
+					if image then
+						image.Visible = true
+					end
+				end
+			end
+		end
+	end)
+
+	while elapsed < 4 and not destroyed do
+		local dt = RunService.RenderStepped:Wait()
+		elapsed += dt
+
+		local a =
+			math.clamp(elapsed / 4, 0, 1)
+
+		a = TweenService:GetValue(
+			a,
+			Enum.EasingStyle.Sine,
+			Enum.EasingDirection.Out
+		)
+
+		shakeStrength =
+			startShake * (1 - a)
+
+		rotationStrength =
+			startRotation * (1 - a)
+
+		spotlightSpeed =
+			startSpotlightSpeed * (1 - a)
+
+		currentMoveSpeed =
+			startMoveSpeed * (1 - a)
+	end
+
+	shakeStrength = 0
+	rotationStrength = 0
+	spotlightSpeed = 0
+	currentMoveSpeed = 0
+end
+
+		cleanup = function()
+			if destroyed then
+				return
+			end
+
+			destroyed = true
+			entityMoving = false
+			currentMoveSpeed = 0
+			spotlightSpeed = 0
+			shakeStrength = 0
+			
+			orbitFinalFlying = false
+finalChaserEnding = true
+
+if orbitFinalFlightConnection then
+	orbitFinalFlightConnection:Disconnect()
+	orbitFinalFlightConnection = nil
+end
+
+if orbitFinalPart then
+	orbitFinalPart:Destroy()
+	orbitFinalPart = nil
+end
+
+if orbitChaserPart then
+	orbitChaserPart:Destroy()
+	orbitChaserPart = nil
+end
+
+			rotationStrength = 0
+			
+			if orbitChaserBeam then
+	orbitChaserBeam:Destroy()
+	orbitChaserBeam = nil
+end
+
+if orbitChaserBeamAtt0 then
+	orbitChaserBeamAtt0:Destroy()
+	orbitChaserBeamAtt0 = nil
+end
+
+if orbitChaserBeamAtt1 then
+	orbitChaserBeamAtt1:Destroy()
+	orbitChaserBeamAtt1 = nil
+end
+
+if orbitChaserPart then
+	orbitChaserPart:Destroy()
+	orbitChaserPart = nil
+end
+			
+			if orbitChaserPart then
+	orbitChaserPart:Destroy()
+	orbitChaserPart = nil
+end
+
+if orbitFinalBeam then
+	orbitFinalBeam:Destroy()
+	orbitFinalBeam = nil
+end
+
+if orbitFinalBeamAtt0 then
+	orbitFinalBeamAtt0:Destroy()
+	orbitFinalBeamAtt0 = nil
+end
+
+if orbitFinalBeamAtt1 then
+	orbitFinalBeamAtt1:Destroy()
+	orbitFinalBeamAtt1 = nil
+end
+
+if orbitFinalPart then
+	orbitFinalPart:Destroy()
+	orbitFinalPart = nil
+end
+
+table.clear(orbitFinalImages)
+
+orbitChaserInside = false
+orbitChaserDamageCooldown = 0
+			
+			stopShakeLoop()
+shakeMagnitude = 0
+
+			if connection then
+				connection:Disconnect()
+				connection = nil
+			end
+
+			destroySplitHitboxes()
+
+			table.clear(images)
+			table.clear(spotlights)
+
+			if model and model.Parent then
+				model:Destroy()
+			end
+
+			model = nil
+			currentRoom = nil
+			currentRoomsFolder = nil
+			spawnCFrame = nil
+		end
+
+		connection = RunService.RenderStepped:Connect(function(dt)
+			if destroyed or not model or not model.Parent then
+				cleanup()
+				return
+			end
+
+			t += dt
+			rotationTime += dt
+
+			local currentShakeStrength = shakeStrength
+local currentRotationStrength = rotationStrength
+
+if mergingAfterDeath then
+	currentShakeStrength = mergeShakeStrength
+	currentRotationStrength = mergeRotationStrength
+end
+
+local shakeX =
+	math.noise(t * 55, 0, 0) *
+	currentShakeStrength
+
+local shakeY =
+	math.noise(0, t * 55, 0) *
+	currentShakeStrength
+
+			if rotationTime >= 0.12 then
+				rotationTime = 0
+
+				local maxRotation =
+	math.max(
+		0,
+		math.floor(currentRotationStrength)
+	)
+
+				targetRotation =
+					math.random(
+						-maxRotation,
+						maxRotation
+					)
+			end
+
+			currentRotation +=
+				(targetRotation - currentRotation) *
+				math.clamp(dt * 10, 0, 1)
+
+			for _, info in ipairs(images) do
+				if info.object and info.object.Parent then
+					info.object.Position = UDim2.new(
+						info.position.X.Scale + shakeX,
+						info.position.X.Offset,
+						info.position.Y.Scale + shakeY,
+						info.position.Y.Offset
+					)
+
+					info.object.Rotation =
+						currentRotation
+				end
+			end
+
+			spotlightRotation +=
+				dt * spotlightSpeed
+
+			if spotlightRotation >= math.pi * 2 then
+				spotlightRotation -= math.pi * 2
+			end
+
+			local spotlightAngle =
+				-spotlightRotation
+
+			for _, info in ipairs(spotlights) do
+				if info.attachment
+					and info.attachment.Parent then
+
+					info.attachment.CFrame =
+						info.cframe *
+						CFrame.Angles(
+							0,
+							spotlightAngle,
+							0
+						)
+				end
+			end
+
+			if entityMoving
+				and not deathTweenStarted
+				and mainPart
+				and mainPart.Parent then
+
+				mainPart.CFrame =
+					mainPart.CFrame -
+					mainPart.CFrame.LookVector *
+					(currentMoveSpeed * dt)
+			end
+			
+			if orbitPart
+	and orbitPart.Parent
+	and model
+	and model.Parent then
+
+	local main = model:FindFirstChild("Main", true)
+
+	if main and main:IsA("BasePart") then
+		orbitAngle +=
+			(orbitSpeed / orbitRadius) * dt
+
+		if orbitAngle >= math.pi * 2 then
+			orbitAngle -= math.pi * 2
+		end
+
+		local offset = Vector3.new(
+			math.cos(orbitAngle) * orbitRadius,
+			0,
+			math.sin(orbitAngle) * orbitRadius
+		)
+
+		orbitPart.CFrame =
+			CFrame.new(main.Position + offset)
+	end
+end
+
+if orbitChaserPart
+	and orbitChaserPart.Parent
+	and model
+	and model.Parent
+	and not finalChaserEnding then
+	
+	orbitChaserShakeTime += dt
+orbitChaserRotationTime += dt
+
+if orbitChaserRotationTime >= 0.1 then
+	orbitChaserRotationTime = 0
+
+	orbitChaserTargetRotation =
+		math.random(-5, 5)
+end
+
+orbitChaserRotation +=
+	(orbitChaserTargetRotation - orbitChaserRotation) *
+	math.clamp(dt * 12, 0, 1)
+
+local shakeX =
+	math.noise(orbitChaserShakeTime * 18, 0, 0) * 0.035
+
+local shakeY =
+	math.noise(0, orbitChaserShakeTime * 18, 0) * 0.035
+
+for _, info in ipairs(orbitChaserImages) do
+	if info.object and info.object.Parent then
+		info.object.Position = UDim2.new(
+			info.position.X.Scale + shakeX,
+			info.position.X.Offset,
+			info.position.Y.Scale + shakeY,
+			info.position.Y.Offset
+		)
+
+		info.object.Rotation =
+			info.rotation + orbitChaserRotation
+	end
+end
+
+if orbitFinalPart
+	and orbitFinalPart.Parent
+	and model
+	and model.Parent then
+
+	orbitFinalShakeTime += dt
+	orbitFinalRotationTime += dt
+
+	if orbitFinalRotationTime >= 0.1 then
+		orbitFinalRotationTime = 0
+
+		orbitFinalTargetRotation =
+			math.random(-5, 5)
+	end
+
+	orbitFinalRotation +=
+		(orbitFinalTargetRotation - orbitFinalRotation) *
+		math.clamp(dt * 12, 0, 1)
+
+	local shakeX =
+		math.noise(orbitFinalShakeTime * 18, 0, 0) * 0.035
+
+	local shakeY =
+		math.noise(0, orbitFinalShakeTime * 18, 0) * 0.035
+
+	for _, info in ipairs(orbitFinalImages) do
+		if info.object and info.object.Parent then
+			info.object.Position = UDim2.new(
+				info.position.X.Scale + shakeX,
+				info.position.X.Offset,
+				info.position.Y.Scale + shakeY,
+				info.position.Y.Offset
+			)
+
+			info.object.Rotation =
+				info.rotation + orbitFinalRotation
+		end
+	end
+end
+
+	local character = player.Character
+	local humanoid =
+		character and
+		character:FindFirstChildOfClass("Humanoid")
+
+	local hrp =
+		character and
+		character:FindFirstChild("HumanoidRootPart")
+
+	if not hrp
+		or not humanoid
+		or humanoid.Health <= 0 then
+
+		orbitChaserInside = false
+		orbitChaserDamageCooldown = 0
+	else
+		local currentPos = orbitChaserPart.Position
+		local targetPos = hrp.Position
+
+		local direction = targetPos - currentPos
+		local distance = direction.Magnitude
+
+		if distance > 0.01 then
+			local moveDistance =
+				math.min(8 * dt, distance)
+
+			local newPos =
+				currentPos +
+				direction.Unit * moveDistance
+
+			orbitChaserPart.CFrame =
+				CFrame.lookAt(
+					newPos,
+					targetPos
+				)
+		end
+
+		overlapParams.FilterDescendantsInstances = {
+			character
+		}
+
+		local touching =
+			#workspace:GetPartBoundsInBox(
+				orbitChaserPart.CFrame,
+				orbitChaserPart.Size,
+				overlapParams
+			) > 0
+
+		local hiding =
+			character:GetAttribute("Hiding") == true
+
+		if not touching then
+			orbitChaserInside = false
+			orbitChaserDamageCooldown = 0
+		else
+			if not orbitChaserInside then
+				orbitChaserInside = true
+				orbitChaserDamageCooldown = 3
+
+				if not hiding then
+					humanoid:TakeDamage(50)
+					hit:Play()
+
+					game.ReplicatedStorage.GameStats[
+						"Player_" ..
+						game.Players.LocalPlayer.Name
+					].Total.DeathCause.Value = "SP-1"
+				end
+			else
+				if orbitChaserDamageCooldown > 0 then
+					orbitChaserDamageCooldown -= dt
+				end
+
+				if orbitChaserDamageCooldown <= 0 then
+					orbitChaserDamageCooldown = 3
+
+					if not hiding then
+						humanoid:TakeDamage(50)
+						hit:Play()
+
+						game.ReplicatedStorage.GameStats[
+							"Player_" ..
+							game.Players.LocalPlayer.Name
+						].Total.DeathCause.Value = "SP-1"
+					end
+				end
+			end
+		end
+	end
+end
+
+			if entityMoving
+				and not effectTriggered
+				and not splitOnce then
+
+				effectCooldown += dt
+
+				if effectCooldown >= 2 then
+					effectCooldown = 0
+					effectTriggered = true
+					splitOnce = true
+					guiFollowActive = true
+
+					createSplitHitboxes()
+					
+					startShakeLoop()
+
+task.spawn(function()
+	local elapsed = 0
+
+	while elapsed < 2
+		and not destroyed
+		and shakeLoop do
+
+		local dt = RunService.RenderStepped:Wait()
+		elapsed += dt
+
+		local a = math.clamp(elapsed / 2, 0, 1)
+
+		a = TweenService:GetValue(
+			a,
+			Enum.EasingStyle.Sine,
+			Enum.EasingDirection.In
+		)
+
+		shakeMagnitude = 5 * a
+	end
+
+	if shakeLoop and not destroyed then
+		shakeMagnitude = 5
+	end
+end)
+
+					task.spawn(function()
+						playDropParticles()
+					end)
+
+					startSplitBoost()
+
+					for _, obj in ipairs(model:GetDescendants()) do
+						if obj:IsA("ImageLabel") then
+							local gui =
+								obj:FindFirstAncestorOfClass(
+									"BillboardGui"
+								)
+
+							if gui then
+								if gui.Name == "MonsterGui" then
+									obj.Visible = false
+
+								elseif gui.Name == "RedSplit" then
+									gui.Enabled = true
+									obj.Visible = true
+									redGui = gui
+
+								elseif gui.Name == "BlueSplit" then
+									gui.Enabled = true
+									obj.Visible = true
+									blueGui = gui
+								end
+							end
+
+						elseif obj:IsA("ParticleEmitter") then
+							local attachment = obj.Parent
+
+							if attachment
+								and attachment:IsA("Attachment") then
+
+								if attachment.Name == "Rings" then
+									obj.Enabled = false
+
+								elseif attachment.Name == "RedSplitParticle" then
+									obj.Enabled = true
+									redParticleAttachment =
+										attachment
+
+								elseif attachment.Name == "BlueSplitParticle" then
+									obj.Enabled = true
+									blueParticleAttachment =
+										attachment
+								end
+							end
+						end
+					end
+
+					if redGui then
+						local parent =
+							redGui.Adornee or redGui.Parent
+
+						if parent and parent:IsA("BasePart") then
+							redStartWorldY =
+								parent.Position.Y +
+								redGui.StudsOffsetWorldSpace.Y
+						end
+					end
+
+					if blueGui then
+						local parent =
+							blueGui.Adornee or blueGui.Parent
+
+						if parent and parent:IsA("BasePart") then
+							blueStartWorldY =
+								parent.Position.Y +
+								blueGui.StudsOffsetWorldSpace.Y
+						end
+					end
+
+					task.delay(2, function()
+						if destroyed
+							or not model
+							or not model.Parent then
+							return
+						end
+
+						startDeathTween()
+					end)
+				end
+			end
+
+			if effectTriggered
+	and guiFollowActive
+	and not mergingAfterDeath then
+
+				if redSplitHitbox
+					and redSplitHitbox.Parent
+					and redGui
+					and redGui.Parent then
+
+					local parent =
+						redGui.Adornee or redGui.Parent
+
+					if parent and parent:IsA("BasePart") then
+						redSplitHitbox.CFrame =
+							CFrame.new(
+								parent.Position +
+								redGui.StudsOffsetWorldSpace
+							)
+					end
+				end
+
+				if blueSplitHitbox
+					and blueSplitHitbox.Parent
+					and blueGui
+					and blueGui.Parent then
+
+					local parent =
+						blueGui.Adornee or blueGui.Parent
+
+					if parent and parent:IsA("BasePart") then
+						blueSplitHitbox.CFrame =
+							CFrame.new(
+								parent.Position +
+								blueGui.StudsOffsetWorldSpace
+							)
+					end
+				end
+
+				if redGui
+					and redGui.Parent
+					and redSpotlight
+					and redSpotlight.Parent
+					and redStartWorldY then
+
+					local attachment =
+						redSpotlight.Parent
+
+					if attachment:IsA("Attachment") then
+						local right =
+							attachment.WorldCFrame.RightVector
+
+						local targetWorldPos =
+							attachment.WorldPosition +
+							right * splitDistance
+
+						local parent =
+							redGui.Adornee or redGui.Parent
+
+						if parent and parent:IsA("BasePart") then
+							local currentWorldPos =
+								parent.Position +
+								redGui.StudsOffsetWorldSpace
+
+							local targetPos =
+								Vector3.new(
+									targetWorldPos.X,
+									redStartWorldY,
+									targetWorldPos.Z
+								)
+
+							local newWorldPos =
+								currentWorldPos:Lerp(
+									targetPos,
+									math.clamp(dt * 8, 0, 1)
+								)
+
+							redGui.StudsOffsetWorldSpace =
+								newWorldPos -
+								parent.Position
+						end
+					end
+				end
+
+				if blueGui
+					and blueGui.Parent
+					and blueSpotlight
+					and blueSpotlight.Parent
+					and blueStartWorldY then
+
+					local attachment =
+						blueSpotlight.Parent
+
+					if attachment:IsA("Attachment") then
+						local right =
+							attachment.WorldCFrame.RightVector
+
+						local targetWorldPos =
+							attachment.WorldPosition -
+							right * splitDistance
+
+						local parent =
+							blueGui.Adornee or blueGui.Parent
+
+						if parent and parent:IsA("BasePart") then
+							local currentWorldPos =
+								parent.Position +
+								blueGui.StudsOffsetWorldSpace
+
+							local targetPos =
+								Vector3.new(
+									targetWorldPos.X,
+									blueStartWorldY,
+									targetWorldPos.Z
+								)
+
+							local newWorldPos =
+								currentWorldPos:Lerp(
+									targetPos,
+									math.clamp(dt * 8, 0, 1)
+								)
+
+							blueGui.StudsOffsetWorldSpace =
+								newWorldPos -
+								parent.Position
+						end
+					end
+				end
+
+				if redParticleAttachment
+					and redParticleAttachment.Parent
+					and redGui
+					and redGui.Parent then
+
+					local parent =
+						redGui.Adornee or redGui.Parent
+
+					if parent and parent:IsA("BasePart") then
+						redParticleAttachment.WorldPosition =
+							parent.Position +
+							redGui.StudsOffsetWorldSpace
+					end
+				end
+
+				if blueParticleAttachment
+					and blueParticleAttachment.Parent
+					and blueGui
+					and blueGui.Parent then
+
+					local parent =
+						blueGui.Adornee or blueGui.Parent
+
+					if parent and parent:IsA("BasePart") then
+						blueParticleAttachment.WorldPosition =
+							parent.Position +
+							blueGui.StudsOffsetWorldSpace
+					end
+				end
+			end
+
+			-- SAU KHI DEATH TWEEN 4 GIÂY XON
+
+			-- MERGE RED + BLUE SAU 2 GIÂY
+
+			local character = player.Character
+
+			local humanoid =
+				character and
+				character:FindFirstChildOfClass("Humanoid")
+
+			local hrp =
+				character and
+				character:FindFirstChild("HumanoidRootPart")
+
+			if splitHitboxesActive then
+				if not character
+					or not humanoid
+					or humanoid.Health <= 0 then
+
+					splitHitboxInside = false
+					splitHitboxDamageCooldown = 0
+				else
+					overlapParams.FilterDescendantsInstances =
+						{character}
+
+					local touchingRed = false
+					local touchingBlue = false
+
+					if redSplitHitbox
+						and redSplitHitbox.Parent then
+
+						touchingRed =
+							#workspace:GetPartBoundsInBox(
+								redSplitHitbox.CFrame,
+								redSplitHitbox.Size,
+								overlapParams
+							) > 0
+					end
+
+					if blueSplitHitbox
+						and blueSplitHitbox.Parent then
+
+						touchingBlue =
+							#workspace:GetPartBoundsInBox(
+								blueSplitHitbox.CFrame,
+								blueSplitHitbox.Size,
+								overlapParams
+							) > 0
+					end
+
+					local touchingSplitHitbox =
+						touchingRed or touchingBlue
+
+					local hiding =
+						character:GetAttribute("Hiding") == true
+
+					if not touchingSplitHitbox then
+						splitHitboxInside = false
+						splitHitboxDamageCooldown = 0
+					else
+						if not splitHitboxInside then
+							splitHitboxInside = true
+							splitHitboxDamageCooldown = 3
+
+							if not hiding then
+								humanoid:TakeDamage(15)
+								hit:Play()
+
+								game.ReplicatedStorage.GameStats[
+									"Player_" ..
+									game.Players.LocalPlayer.Name
+								].Total.DeathCause.Value = "SP-1"
+							end
+						else
+							if splitHitboxDamageCooldown > 0 then
+								splitHitboxDamageCooldown -= dt
+							end
+
+							if splitHitboxDamageCooldown <= 0 then
+								splitHitboxDamageCooldown = 3
+
+								if not hiding then
+									humanoid:TakeDamage(15)
+									hit:Play()
+
+									game.ReplicatedStorage.GameStats[
+										"Player_" ..
+										game.Players.LocalPlayer.Name
+									].Total.DeathCause.Value = "SP-1"
+								end
+							end
+						end
+					end
+				end
+			end
+
+			if not character
+				or not humanoid
+				or not hrp
+				or humanoid.Health <= 0 then
+
+				insideHitbox = false
+				damageCooldown = 0
+				return
+			end
+
+			overlapParams.FilterDescendantsInstances =
+				{character}
+
+			local touching = {}
+
+			if hitbox.CanQuery then
+				touching =
+					workspace:GetPartBoundsInBox(
+						hitbox.CFrame,
+						hitbox.Size,
+						overlapParams
+					)
+			end
+
+			local touchingNow =
+				#touching > 0
+
+			local hiding =
+				character:GetAttribute("Hiding") == true
+
+			if not touchingNow then
+				insideHitbox = false
+				damageCooldown = 0
+				return
+			end
+
+			rayParams.FilterDescendantsInstances = {
+				model,
+				character
+			}
+
+			local direction =
+				hrp.Position -
+				hitbox.Position
+
+			local result =
+				workspace:Raycast(
+					hitbox.Position,
+					direction,
+					rayParams
+				)
+
+			if result ~= nil then
+				return
+			end
+
+			if not insideHitbox then
+				insideHitbox = true
+				damageCooldown = 3
+
+				if not hiding then
+					humanoid:TakeDamage(30)
+					hit:Play()
+
+					game.ReplicatedStorage.GameStats[
+						"Player_" ..
+						game.Players.LocalPlayer.Name
+					].Total.DeathCause.Value = "SP-1"
+				end
+
+				return
+			end
+
+			if damageCooldown > 0 then
+				damageCooldown -= dt
+			end
+
+			if damageCooldown <= 0 then
+				damageCooldown = 3
+
+				if not hiding then
+					humanoid:TakeDamage(30)
+					hit:Play()
+
+					game.ReplicatedStorage.GameStats[
+						"Player_" ..
+						game.Players.LocalPlayer.Name
+					].Total.DeathCause.Value = "SP-1"
+				end
+			end
+		end)
+
+		task.delay(0, function()
+			if destroyed
+				or not model
+				or not model.Parent then
+
+				cleanup()
+				return
+			end
+
+			entityMoving = true
+			currentMoveSpeed = 0
+		end)
+	else
+		warn("Không tìm thấy RoomEntrance hợp lệ trong CurrentRooms!")
+		model:Destroy()
+	end
+end
